@@ -1,0 +1,8 @@
+coverage
+dist
+distprod
+node_modules
+db
+.env*
+yarn-error.log
+package-lock.json

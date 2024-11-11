@@ -1,0 +1,21 @@
+{
+ 
+  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node18/tsconfig"],
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "declaration": false,
+    "sourceMap": true,
+    "incremental": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "exactOptionalPropertyTypes": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+  },
+  "include": ["src/**/*", "tests/e2e/*"],
+  "exclude": ["node_modules", "dist"]
+}

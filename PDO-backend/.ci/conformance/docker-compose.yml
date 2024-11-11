@@ -1,0 +1,6 @@
+version: "3.7"
+
+services:
+  conformance-v3:
+    build: ../..
+    image: 305472350643.dkr.ecr.eu-central-1.amazonaws.com/ebsi/conformance-v3:conformance_ebsiint-6085-minor-fix-mocks_v3.0.0

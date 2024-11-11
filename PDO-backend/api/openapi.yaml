@@ -1,0 +1,1961 @@
+openapi: 3.1.0
+info:
+  title: Server API v3
+  version: 3.0.0
+  description: EBSI WCT v3
+  termsOfService: https://api-pilot.ebsi.eu/docs/terms
+  contact:
+    name: EBSI Support - Service Desk
+    url: https://ec.europa.eu/digital-building-blocks/tracker/plugins/servlet/desk/portal/11
+  license:
+    name: EUPL-1.2
+    url: https://joinup.ec.europa.eu/page/eupl-text-11-12
+servers:
+  - url: https://api-conformance.ebsi.eu
+tags:
+  - name: Auth Server
+    description: Authorisation Server
+  - name: Issuer Server
+    description: Credential Issuer
+paths:
+ /v3/auth/.well-known/openid-configuration:
+    get:
+      operationId: get-openid-configuration
+      tags:
+        - Auth Server
+      summary: Authorisation Server discovery metadata
+      description: |
+        Client or a wallet must obtain the Authorisation Server metadata prior to the transaction using strategies described in [OAuth 2.0 Authorization Server Metadata](https://www.rfc-editor.org/info/rfc8414) or out-of-band.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/openid-configuration"
+              examples:
+                ebsiAuthoriseAndAccredit:
+                  summary: |
+                    Profile: EBSI Authorise and Accredit
+                  value:
+                    issuer: https://api-conformance.ebsi.eu/conformance/v3/auth
+                    authorization_endpoint: https://api-conformance.ebsi.eu/conformance/v3/auth/authorize
+                    token_endpoint: https://api-conformance.ebsi.eu/conformance/v3/auth/token
+                    jwks_uri: https://api-conformance.ebsi.eu/conformance/v3/auth/jwks
+                    redirect_uris:
+                      - https://api-conformance.ebsi.eu/conformance/v3/auth/direct_post
+                    scopes_supported:
+                      - openid
+                    response_types_supported:
+                      - vp_token
+                      - id_token
+                    response_modes_supported:
+                      - query
+                    grant_types_supported:
+                      - authorization_code
+                    subject_types_supported:
+                      - public
+                    id_token_signing_alg_values_supported:
+                      - ES256
+                    request_object_signing_alg_values_supported:
+                      - ES256
+                    request_parameter_supported: true
+                    request_uri_parameter_supported: true
+                    token_endpoint_auth_methods_supported:
+                      - private_key_jwt
+                    request_authentication_methods_supported:
+                      authorization_endpoint:
+                        - request_object
+                    vp_formats_supported:
+                      jwt_vp:
+                        alg_values_supported:
+                          - ES256
+                      jwt_vc:
+                        alg_values_supported:
+                          - ES256
+                    subject_syntax_types_supported:
+                      - did:key
+                      - did:ebsi
+                    subject_syntax_types_discriminations:
+                      - did:key:jwk_jcs-pub
+                      - did:ebsi:v1
+                    subject_trust_frameworks_supported:
+                      - ebsi
+                    id_token_types_supported:
+                      - subject_signed_id_token
+                      - attester_signed_id_token
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: |
+                  Connection timeout
+ /v3/auth/jwks:
+    get:
+      tags:
+        - Auth Server
+      summary: Authorisation Server's JWKS endpoint
+      description: |
+        A JSON Web Key (JWK) used by the authorisation server. [RFC4627].
+      operationId: jwks
+      responses:
+        "200":
+          description: Success
+          content:
+            application/jwk-set+json:
+              schema:
+                $ref: "#/components/schemas/jwks"
+        "500":
+          description: Internal Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Internal Server Error:
+                  value:
+                    title: Internal Server Error
+                    status: 500
+                    detail: The server encountered an internal error and was unable to complete your request
+ /v3/auth/authorize:
+    get:
+      operationId: get-authorize
+      tags:
+        - Auth Server
+      summary: OIDC Authorization endpoint
+      description: |
+        After the discovery, the client proceeds with Verifiable Credential Issuance flow by requesting access for the required credential, from the Authorisation Server. The Authorisation Request Object must be signed with the client's private keys, owned by the requesting the client_id. The client's public key must be discoverable through client's openid-configuration through the jwks_uri parameter.
+      parameters:
+        - name: scope
+          in: query
+          description: |
+            REQUIRED. OpenID Connect requests MUST contain the openid scope value. If the openid scope value is not present, the behavior is entirely unspecified.
+          required: true
+          schema:
+            type: string
+          examples:
+            openid:
+              summary: OpenID
+              value: openid
+        - name: response_type
+          in: query
+          required: true
+          description: |
+            REQUIRED. OAuth 2.0 Response Type value that determines the authorization processing flow to be used, including what parameters are returned from the endpoints used. When using the Authorization Code Flow, this value is code.
+
+            MUST be 'code'
+          schema:
+            type: string
+          example: code
+        - name: client_id
+          in: query
+          required: true
+          description: |
+            OAuth 2.0 Client Identifier valid at the Authorization Server.
+
+            Verifiable Accreditation Issuance: MUST be URL of the issuer requesting the accreditation that was registered with the Accreditation Issuer
+          schema:
+            type: string
+            format: URL
+          examples:
+            accreditationIssuance:
+              summary: Accreditation or VC Issuance to Server/Cloud Wallet
+              value: https://my-issuer.eu/suffix/xyz
+        - name: client_metadata
+          in: query
+          required: true
+          description: |
+            REQUIRED. Client Metadata including a link to the client JWKS (`jwks_uri`, required) and an `authorization_endpoint` (optional).
+          schema:
+            type: object
+            properties:
+              jwks_uri:
+                title: JWKS URI
+                description: |
+                  REQUIRED. URL of the client's JWK Set document.
+                type: string
+                format: URI
+                example: https://my-issuer.eu/suffix/xyz/jwks
+              authorization_endpoint:
+                title: Authorization Endpoint
+                type: string
+                format: URI
+                example: https://my-issuer.eu/suffix/xyz/authorize
+        - name: redirect_uri
+          in: query
+          required: true
+          description: |
+            REQUIRED. Redirection URI to which the response will be sent. This URI MUST exactly match one of the Redirection URI values for the Client pre-registered at the OpenID Provider.
+          schema:
+            type: string
+          example: https://my-issuer.eu/suffix/xyz/code-cb
+        - name: state
+          in: query
+          description: |
+            RECOMMENDED. Opaque value used to maintain state between the request
+            and the callback. Typically, Cross-Site Request Forgery (CSRF, XSRF)
+            mitigation is done by cryptographically binding the value of this
+            parameter with a browser cookie.
+          schema:
+            type: string
+          example: 32f6e80d-bc60-4261-a1c0-c6fe0b15bd9f
+        - name: nonce
+          in: query
+          description: |
+            OPTIONAL. String value used to associate a Client session with an ID Token, and to
+            mitigate replay attacks. The value is passed through unmodified from the Authentication
+            Request to the ID Token. Sufficient entropy MUST be present in the nonce values used to
+            prevent attackers from guessing values. For implementation notes, see Section 15.5.2.
+          schema:
+            type: string
+          example: n-0S6_WzA2Mj
+        - name: request
+          in: query
+          required: true
+          description: |
+            Authorisation Request Object - The Request Object must be signed with the client's private keys, owned by the requesting client_id. The used private key's public key must be discoverable through client's openid-configuration through jwks_uri parameter.
+
+            See the Authorisation Request Object schema.
+          schema:
+            type: string
+            format: '^(([A-Za-z0-9\-_])+\.)([A-Za-z0-9\-_]+)(\.([A-Za-z0-9\-_]+))?$'
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6IkpwLTliRUk4dTY4LWU5NW1Ud25DRktLSWdUbkR1Ukhjb1RIYXpwWENKdDQifQ.eyJpc3MiOiJodHRwczovL215LWlzc3Vlci5ldS9zdWZmaXgveHl6IiwiYXVkIjoiaHR0cHM6Ly9hcGkuY29uZm9ybWFuY2UuZWJzaS5ldS9jb25mb3JtYW5jZS92My9hdXRoLW1vY2siLCJleHAiOjE1ODk2OTg4MDAsInJlc3BvbnNlX3R5cGUiOiJjb2RlIiwic2NvcGUiOiJvcGVuaWQiLCJub25jZSI6Imdsa0ZGb2lzZGZFdWk0MyIsImNsaWVudF9pZCI6Imh0dHBzOi8vbXktaXNzdWVyLmV1L3N1ZmZpeC94eXoiLCJhdXRob3JpemF0aW9uX2RldGFpbHMiOlt7InR5cGUiOiJvcGVuaWRfY3JlZGVudGlhbCIsImZvcm1hdCI6Imp3dF92YyIsInR5cGVzIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiVmVyaWZpYWJsZUF0dGVzdGF0aW9uIiwiVmVyaWZpYWJsZUF1dGhvcmlzYXRpb25Ub09uYm9hcmQiXX1dLCJyZWRpcmVjdF91cmkiOiJodHRwczovL215LWlzc3Vlci5ldS9zdWZmaXgveHl6L2NvZGUtY2IifQ.uflkdTYouElJdW9VXysBIeQKTSCEig-3ktwOAuWNQO4UvwpstueNXIZe1u3m4GynToXvSpY5vvbtfBs9y2ENzg
+        - name: issuer_state
+          in: query
+          required: false
+          description: |
+            REQUIRED if Credential Offering contained `issuer_state`.
+          schema:
+            type: string
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6Ink2UTFUTWN4am4zU1ZDT0dNUm9mZHA0M1owU0tGMVROSTkwcG5CWldSZkkifQ.eyJjbGllbnRfaWQiOiJkaWQ6a2V5OnoyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnB0SnZwaHdHaXh6azJiM1l4ZnNxRzZwRFNYTFhia0g1Y01HYjhBZDFWSkp5ZWkxWWhEQjRDb2RNNW5DaDJxUGU4TFhNQVU2OWdjdTZmUmI2TExvYmQxRmZjOXdSQlU0NXBIWWNKUUVnamg4blZVdmR3NUhqWGgzNEJ3NUpQNzR0N1ciLCJjcmVkZW50aWFsX3R5cGVzIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiVmVyaWZpYWJsZUF0dGVzdGF0aW9uIiwiQ1RXYWxsZXRDcm9zc0luVGltZSJdLCJpYXQiOjE2ODI0OTY3MTIsImV4cCI6MTY4MjQ5NzAxMiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwL2NvbmZvcm1hbmNlL3YzL2lzc3Vlci1tb2NrIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwL2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jayIsInN1YiI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHRKdnBod0dpeHprMmIzWXhmc3FHNnBEU1hMWGJrSDVjTUdiOEFkMVZKSnllaTFZaERCNENvZE01bkNoMnFQZThMWE1BVTY5Z2N1NmZSYjZMTG9iZDFGZmM5d1JCVTQ1cEhZY0pRRWdqaDhuVlV2ZHc1SGpYaDM0Qnc1SlA3NHQ3VyJ9.QzNioxnUbdxhdnYoAzNiati7-Lg5Kkg0mEAf1OHRvXyjxn1Z-_kuvcVdOmIpsF_o55l4NMy2hmz5yLIFs9zVEA
+        - name: code_challenge
+          in: query
+          required: false
+          description: |
+            Only for Holder Wallets. In format of `BASE64URL-ENCODE(SHA256(code_verifier as UTF-8 string))`.
+
+            `code_verifier` is client generated secure random, which will be used with token endpoint. It is between 43 and 128 characters long, and contains characters A-Z, a-z, 0-9, hyphen, period, underscore, and tilde. Please see [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636#section-4.1)
+          schema:
+            type: string
+          example: yKZeDTMFPu8YSwqdlIVkQBifcwmtUgnqzjP-hvV0qdI
+        - name: code_challenge_method
+          in: query
+          required: false
+          description: |
+            Only for Holder Wallets. MUST be "S256".
+          schema:
+            type: string
+          example: S256
+      responses:
+        "302":
+          description: |
+            Authorisation Server responds with one of the two responses:
+              - ID Token Request
+              - Error codes for authorization endpoint
+
+            All responses are in the "Location" header parameter and are x-www-form-urlencoded
+          headers:
+            Location:
+              description: x-www-form-urlencoded ID Token Request
+              required: true
+              schema:
+                type: string
+                format: URL
+              examples:
+                success:
+                  summary: Successful Request
+                  value: openid://?state=32f6e80d-bc60-4261-a1c0-c6fe0b15bd9f&client_id=https%3A%2F%2Fconformance-test.ebsi.eu%2Fconformance%2Fv3%2Fauth&redirect_uri=https%3A%2F%2Fconformance-test.ebsi.eu%2Fconformance%2Fv3%2Fauth%2Fdirect_post&response_type=id_token&response_mode=direct_post&scope=openid&nonce=8b4b9a89-2d0d-4b94-b975-3c93af758926&request=eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6IkZMeEkzTE04bUZDRkNEMUg0VmpacVd0MVBmaWQyaThBQ1lpRHZFelo5VU0ifQ.eyJzdGF0ZSI6IjMyZjZlODBkLWJjNjAtNDI2MS1hMWMwLWM2ZmUwYjE1YmQ5ZiIsImNsaWVudF9pZCI6Imh0dHBzOi8vY29uZm9ybWFuY2UtdGVzdC5lYnNpLmV1L2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jayIsInJlZGlyZWN0X3VyaSI6Imh0dHBzOi8vY29uZm9ybWFuY2UtdGVzdC5lYnNpLmV1L2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jay9kaXJlY3RfcG9zdCIsInJlc3BvbnNlX3R5cGUiOiJpZF90b2tlbiIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdCIsInNjb3BlIjoib3BlbmlkIiwibm9uY2UiOiI4YjRiOWE4OS0yZDBkLTRiOTQtYjk3NS0zYzkzYWY3NTg5MjYiLCJpc3MiOiJodHRwczovL2NvbmZvcm1hbmNlLXRlc3QuZWJzaS5ldS9jb25mb3JtYW5jZS92My9hdXRoLW1vY2siLCJhdWQiOiJodHRwczovL215LWlzc3Vlci5ldS9zdWZmaXgveHl6In0.WwQFrOulUdXt2Yr-rqD-8xHCBd1EZRVM6KaVWWsZJGWh7mKmj6qDJrlGjWsJUcLYgF9AaetjOxubKeeQ4VA60Q
+                invalidRequest:
+                  summary: Invalid Request
+                  value: https://my-issuer.eu/suffix/xyz/code-cb?error=invalid_request&error_description=%5Binvalid_literal%5D%20in%20%27request.authorization_details.0.type%27%3A%20Invalid%20literal%20value%2C%20expected%20%22openid_credential%22%0A%5Binvalid_literal%5D%20in%20%27request.authorization_details.0.format%27%3A%20Invalid%20literal%20value%2C%20expected%20%22jwt_vc%22%0A%5Bcustom%5D%20in%20%27request.authorization_details.0.types%27%3A%20Array%20must%20include%20VerifiableCredential%2C%20VerifiableAttestation&state=32f6e80d-bc60-4261-a1c0-c6fe0b15bd9f
+        "400":
+          description: |
+            Authorisation Endpoint Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                invalidRedirectURI:
+                  value:
+                    detail: '["redirect_uri must be a URL address"]'
+                    status: 400
+                    title: "Bad Request"
+                    type: about:blank
+        "500":
+          description: Internal Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Internal Server Error:
+                  value:
+                    title: Internal Server Error
+                    status: 500
+                    detail: The server encountered an internal error and was unable to complete your request
+ /v3/auth/request_uri/{requestId}:
+    get:
+      operationId: get-request_uri
+      tags:
+        - Auth Server
+      summary: Request by reference
+      description: |
+        Authorisation Server's endpoint that returns a [Request Object](https://openid.net/specs/openid-connect-core-1_0.html#UseRequestUri).
+        request_uri SHOULD be used whenever the request object is large.
+      parameters:
+        - name: requestId
+          in: path
+          description: Unique Request ID
+          required: true
+          schema:
+            type: string
+          examples:
+            tokenRequestID:
+              summary: Request ID
+              value: 2160d1e4-2243-48cc-ae90-169e3d206502
+      responses:
+        "200":
+          description: OK
+          content:
+            application/jwt:
+              schema:
+                title: Request
+                description: |
+                  Authorisation Request Object - The Request Object must be signed with the client's (Credential Issuer) private keys, owned by the requesting client_id. The used private key's public key must be discoverable through client's openid-configuration through jwks_uri parameter.
+
+                  The Authorisation Request Object MUST be a valid JWS.
+
+                  See the Authorisation Request Object schema.
+                type: string
+                format: '^(([A-Za-z0-9\-_])+\.)([A-Za-z0-9\-_]+)(\.([A-Za-z0-9\-_]+))?$'
+                example: |
+                  eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6IkZMeEkzTE04bUZDRkNEMUg0VmpacVd0MVBmaWQyaThBQ1lpRHZFelo5VU0ifQ.eyJzdGF0ZSI6IjIyYmQxM2FiLTM1NjYtNDM1MS04MDBiLWExNGM1Y2Q3ZjE3NiIsImNsaWVudF9pZCI6Imh0dHBzOi8vY29uZm9ybWFuY2UtdGVzdC5lYnNpLmV1L2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jayIsInJlZGlyZWN0X3VyaSI6Imh0dHBzOi8vY29uZm9ybWFuY2UtdGVzdC5lYnNpLmV1L2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jay9kaXJlY3RfcG9zdCIsInJlc3BvbnNlX3R5cGUiOiJpZF90b2tlbiIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdCIsInNjb3BlIjoib3BlbmlkIiwibm9uY2UiOiIyMjgwMGEyMS0zNGNhLTQ5Y2MtYTNhMS00ODRjNzdhNzhiZTAiLCJpc3MiOiJodHRwczovL2NvbmZvcm1hbmNlLXRlc3QuZWJzaS5ldS9jb25mb3JtYW5jZS92My9hdXRoLW1vY2siLCJhdWQiOiJodHRwczovL215LWlzc3Vlci5ldS9zdWZmaXgveHl6In0.9cWdEYiZNGLO0pmSwnYCvMfECGkV7egVRqG4LMgBO7y1wKVz23QmrPOR_QbpxVA-IjkbSqWdXeTuVsNSSGlAlw
+        "400":
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                invalidState:
+                  value:
+                    detail: '["requestId must be a UUID"]'
+                    status: 400
+                    title: Bad Request
+                    type: about:blank
+        "404":
+          description: Request Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                invalidState:
+                  value:
+                    detail: No Authorization Request found with the ID {requestId}
+                    status: 404
+                    title: Not Found
+                    type: about:blank
+        "500":
+          description: Internal Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Internal Server Error:
+                  value:
+                    title: Internal Server Error
+                    status: 500
+                    detail: The server encountered an internal error and was unable to complete your request
+ /v3/auth/direct_post:
+    post:
+      operationId: post-direct_post
+      tags:
+        - Auth Server
+      summary: Direct Post
+      description: |
+        Authorisation Server's endpoint that accepts and processes the ID Token issued by the client. The ID Token is self-issued by the client and it MUST be signed with client's DID Document's authentication key.
+
+        See the ID Token - Direct POST response schema.
+      requestBody:
+        content:
+          x-www-form-urlencoded:
+            schema:
+              type: object
+              description: |
+                Self-issued ID Token and signed with DID Authentication key. The signed ID Token is submitted as compact serialised JWS.
+              properties:
+                id_token:
+                  type: string
+                  format: '^(([A-Za-z0-9\-_])+\.)([A-Za-z0-9\-_]+)(\.([A-Za-z0-9\-_]+))?$'
+                state:
+                  type: string
+              required:
+                - id_token
+                - state
+              example:
+                id_token: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDplYnNpOnpybk1TNkJXZHB6UTdtelk0RXdmVFZmIn0.eyJub25jZSI6IjBhMjMwM2VhLTlkNTctNDRiMC04NjU3LTAyYjBkMDkyZjg3MyIsInN1YiI6Imh0dHBzOi8vbXktaXNzdWVyLmV1L3N1ZmZpeC94eXoiLCJpc3MiOiJodHRwczovL215LWlzc3Vlci5ldS9zdWZmaXgveHl6IiwiYXVkIjoiaHR0cHM6Ly9jb25mb3JtYW5jZS10ZXN0LmVic2kuZXUvY29uZm9ybWFuY2UvdjMvYXV0aC1tb2NrIiwiaWF0IjoxNjc2NjQxNzE5LCJleHAiOjE2NzY2NDIwMTl9.N3tAGPBZ-hFkzF-c8Gr6C-YVgvrjbfwqU4iVnQJtCPcq4qioUnr-I9flwubJJYHfbqkC1MoaYGOq5X69kL69nQ
+                state: 8379a190-e437-49f8-8585-a9aa55815c5
+      responses:
+        "302":
+          description: OK
+          headers:
+            Location:
+              description: |
+                x-www-form-urlencoded Authentication Response. It MUST contain a valid `code` and `state`. The `state` claim MUST have the same value as the `state` in the Authorisation Request.
+
+                See Authentication Response schema definition.
+              schema:
+                type: string
+        "400":
+          description: |
+            Authorisation Endpoint Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                invalidState:
+                  value:
+                    detail: No Authentication Request bound to state ${state} found
+                    status: 400
+                    title: Bad Request
+                    type: about:blank
+        "500":
+          description: Internal Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Internal Server Error:
+                  value:
+                    title: Internal Server Error
+                    status: 500
+                    detail: The server encountered an internal error and was unable to complete your request
+ /v3/auth/token:
+    post:
+      operationId: post-token
+      tags:
+        - Auth Server
+      summary: Token endpoint
+      description: |
+        The client proceeds with the code flow, and calls the Token Endpoint with the required details and signs client_assertion JWT with client's private keys, which public key counterparts are resolvable through jwks_uri or is in the Client Metadata shared in the pre-registration step.
+      requestBody:
+        content:
+          x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/token_request"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/access_token_response"
+        "400":
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Bad Request:
+                  value:
+                    title: Bad Request
+                    status: 400
+                    detail: Bad request.
+                Token Expired:
+                  value:
+                    title: Token Expired
+                    status: 400
+                    detail: The token has expired.
+                Issuer Not Found:
+                  value:
+                    title: Issuer Not Found
+                    status: 400
+                    detail: Issuer not found in the trusted apps registry.
+        "401":
+          description: Unauthorised
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Unauthorised:
+                  value:
+                    title: Unauthorized
+                    status: 401
+                    detail: You are not authorized to access the resources.
+        "500":
+          $ref: "#/paths/~1v3~1auth~1jwks/get/responses/500"
+ /v3/tnt/.well-known/openid-credential-issuer:
+    get:
+      operationId: get-openid-credential-issuer
+      tags:
+        - Issuer Server
+      summary: Credential Issuer discovery metadata
+      description: |
+        Client or a wallet must obtain the Credential Issuer metadata prior to the transaction using strategies described in [OAuth 2.0 Authorization Server Metadata](https://www.rfc-editor.org/info/rfc8414) or out-of-band.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/openid-credential-issuer"
+              examples:
+                ebsiAuthoriseAndAccredit:
+                  summary: |
+                    Profile: EBSI Authorise and Accredit
+                  value:
+                    authorization_server: https://api-conformance.ebsi.eu/conformance/v3/auth
+                    credential_issuer: https://api-conformance.ebsi.eu/conformance/v3/issuer
+                    credential_endpoint: https://api-conformance.ebsi.eu/conformance/v3/tnt/credential
+                    deferred_credential_endpoint: https://api-conformance.ebsi.eu/conformance/v3/tnt/credential_deferred
+                    credentials_supported:
+                      - format: jwt_vc
+                        types:
+                          - VerifiableCredential
+                          - VerifiableAttestation
+                          - VerifiableAuthorisationToOnboard
+                        trust_framework:
+                          name: ebsi
+                          type: Accreditation
+                          uri: TIR link towards accreditation
+                        display:
+                          - name: Verifiable Authorisation to onboard
+                            locale: en-GB
+                      - format: jwt_vc
+                        types:
+                          - VerifiableCredential
+                          - VerifiableAttestation
+                          - VerifiableAccreditation
+                          - VerifiableAccreditationToAttest
+                        trust_framework:
+                          name: ebsi
+                          type: Accreditation
+                          uri: TIR link towards accreditation
+                        display:
+                          - name: Verifiable Accreditation to attest
+                            locale: en-GB
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: |
+                  Connection timeout
+ /v3/tnt/credential:
+    post:
+      operationId: post-credential
+      tags:
+        - Issuer Server
+      summary: Credential endpoint
+      description: |
+        The client proceeds with the code flow, and calls the Token Endpoint with the required details and signs client_assertion JWT with client's private keys, which public key counterparts are resolvable through jwks_uri or is in the Client Metadata shared in the pre-registration step.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/credential_request"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credential_response"
+        "400":
+          description: Invalid request error
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |
+                  Error response constructed by the Credential Issuer when the Credential Request
+                  is invalid.
+                properties:
+                  error:
+                    description: The error code, if something went wrong.
+                    type: string
+                  error_description:
+                    description: Additional error information (if any).
+                    type: string
+                examples:
+                  missingAuthorizationHeader:
+                    value:
+                      error: invalid_token
+                      error_description: Authorization header is missing
+        "401":
+          description: Unauthorised request error
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |
+                  Error response constructed by the Credential Issuer when the Credential Request
+                  is unauthorised.
+                properties:
+                  error:
+                    description: The error code, if something went wrong.
+                    type: string
+                  error_description:
+                    description: Additional error information (if any).
+                    type: string
+                examples:
+                  authorizationError:
+                    value:
+                      error: invalid_request
+                      error_description: "Invalid request: the requested types don't correspond to the authorized types"
+        "500":
+          description: Internal Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Internal Server Error:
+                  value:
+                    title: Internal Server Error
+                    status: 500
+                    detail: The server encountered an internal error and was unable to complete your request
+ /v3/tnt/credential_deferred:
+    post:
+      operationId: post-credential-deferred
+      tags:
+        - Issuer Server
+      summary: Deferred credential endpoint
+      description: |
+        If the `/credential` endpoint returned an `acceptance_token` paramater, the client can call
+        the `/credential_deferred` endpoint in order to receive the requested credential.
+        The `acceptance_token` parameter MUST be sent as Access Token in the HTTP header.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/deferred_credential_response"
+        "400":
+          description: Invalid request error
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |
+                  Error response constructed by the Credential Issuer when the Credential Request
+                  is invalid.
+                properties:
+                  error:
+                    description: The error code, if something went wrong.
+                    type: string
+                  error_description:
+                    description: Additional error information (if any).
+                    type: string
+                examples:
+                  missingAuthorizationHeader:
+                    value:
+                      error: invalid_token
+                      error_description: Authorization header is missing
+        "500":
+          description: Internal Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/problem"
+              examples:
+                Internal Server Error:
+                  value:
+                    title: Internal Server Error
+                    status: 500
+                    detail: The server encountered an internal error and was unable to complete your request
+components:
+  schemas:
+    credential_response:
+      title: Credential Response
+      description: |
+        Response that returns a Verifiable Credential in the requested format.
+      type: object
+      properties:
+        format:
+          description: |
+            JSON string denoting the credential format. It MUST be jwt_vc
+          type: string
+          enum:
+            - jwt_vc
+          example: jwt_vc
+        credential:
+          description: |
+            The value of the credential claim in the Credential Response MUST be a JSON string.
+            Credentials of this format are already a sequence of base64url-encoded values separated
+            by period characters and MUST NOT be re-encoded.
+            MUST be present when acceptance_token is not returned.
+          type: string
+        acceptance_token:
+          description: |
+            A JSON string containing a security token subsequently used to obtain a Credential.
+            MUST be present when credential is not returned.
+          type: string
+    credential_request:
+      title: Credential Request
+      description: |
+        A client presents the credential request when she is requesting a credential.
+      type: object
+      required:
+        - format
+        - types
+        - proof
+      properties:
+        format:
+          description: |
+            REQUIRED. Format in which the VCs should be issued.
+            It MUST be jwt_vc.
+            If not specified, the issuer default format is used.
+          type: string
+          enum:
+            - jwt_vc
+        types:
+          description: |
+            Type to the credential being requested.
+
+            The value MUST match the 'types' property in the request.
+          type: array
+          items:
+            description: A valid VC type (within the given framework)
+            type: string
+        proof:
+          type: object
+          required:
+            - type
+            - verificationMethod
+            - jws
+          properties:
+            proof_type:
+              description: |
+                JSON string denoting proof type.
+
+                MUST be jwt
+              type: string
+              enum:
+                - jwt
+            jwt:
+              description: |
+                A signature performed by a key that can be obtained by an identifier in verificationMethod.
+
+                MUST be JWS. See Proof Object schema.
+              type: string
+              format: JWS
+    deferred_credential_response:
+      title: Deferred credential Response
+      description: |
+        Response that returns a Verifiable Credential in the requested format.
+      type: object
+      required:
+        - credential
+        - format
+      properties:
+        format:
+          description: |
+            JSON string denoting the credential format. It MUST be jwt_vc
+          type: string
+          enum:
+            - jwt_vc
+          example: jwt_vc
+        credential:
+          description: |
+            The value of the credential claim in the Credential Response MUST be a JSON string.
+            Credentials of this format are already a sequence of base64url-encoded values separated
+            by period characters and MUST NOT be re-encoded.
+          type: string
+    proof_object:
+      title: Proof Object
+      type: object
+      properties:
+        header:
+          description: JWT Header
+          type: object
+          required:
+            - typ
+            - alg
+            - kid
+          properties:
+            typ:
+              description: Payload type
+              type: string
+              enum:
+                - openid4vci-proof+jwt
+            alg:
+              description: |
+                Signing Algorithm. ES256 algorithm MUST be supported, other algorithms may be supported.
+              type: string
+              enum:
+                - ES256
+                - ES256K
+                - RS256
+                - EdDSA
+            kid:
+              description: |
+                Signing Key Identifier. It MUST be a valid EBSI-compliant DID.
+              type: string
+              format: URI
+        payload:
+          description: JWT Payload
+          type: object
+          required:
+            - iss
+            - aud
+            - iat
+            - nonce
+          properties:
+            iss:
+              title: JWT Issuer
+              description: |
+                The "iss" (issuer) claim identifies the actor who issued the JWT. iss MUST be the client_id of the client.
+              type: string
+              format: URL
+              example: https://my-issuer.eu/suffix/xyz
+            aud:
+              title: JWT Audience (the recipient)
+              description: |
+                The "aud" (audience) claim identifies the recipients that the JWT is intended for. The value MUST be Issuer Server's id.
+              type: string
+              format: URL
+              example: https://api-conformance.ebsi.eu/conformance/v3/issuer
+            iat:
+              title: JWT Issuance Time
+              description: |
+                Time at which the JWT was issued.
+              type: number
+              format: uint
+              example: 1675268413
+            nonce:
+              title: Nonce
+              description: |
+                The value type of this claim MUST be a string, where the value is a c_nonce provided by Auth Server.
+              type: string
+    client_assertion_object:
+      title: Client Assertion Object
+      description: Client Assertion JWT
+      type: object
+      properties:
+        header:
+          description: JWT Header
+          type: object
+          required:
+            - typ
+            - alg
+            - kid
+          properties:
+            typ:
+              description: Payload type
+              type: string
+              enum:
+                - JWT
+            alg:
+              description: |
+                Signing Algorithm. ES256 algorithm MUST be supported, other algorithms may be supported.
+              type: string
+              enum:
+                - ES256
+                - ES256K
+                - RS256
+                - EdDSA
+            kid:
+              description: |
+                Signing Key Identifier. It MUST be a valid EBSI-compliant DID. If the DID is not registered in EBSI?
+              type: string
+              format: URI
+        payload:
+          description: JWT Payload
+          type: object
+          required:
+            - iss
+            - sub
+            - aud
+            - iat
+            - exp
+            - jti
+          properties:
+            iss:
+              title: JWT Issuer
+              description: |
+                The "iss" (issuer) claim identifies the actor who issued the JWT. iss MUST be the client_id of the client.
+              type: string
+              format: URL
+              example: 'https://my-issuer.eu/suffix/xyz"'
+            sub:
+              title: JWT Subject
+              description: |
+                Identifier that identifies the user the ID Token is about. Value MUST be the client_id and must match the iss claim.
+              type: string
+              format: URL
+              example: 'https://my-issuer.eu/suffix/xyz"'
+            aud:
+              title: JWT Audience (the recipient)
+              description: |
+                The "aud" (audience) claim identifies the recipients that the JWT is intended for. The value MUST be Authorisation Server's id - the issuer claim in the openid-configuration of the Authorisation Server.
+              type: string
+              format: URL
+              example: https://api-conformance.ebsi.eu/conformance/v3/auth
+            iat:
+              title: JWT Issuance Time
+              description: |
+                Time at which the JWT was issued.
+              type: number
+              format: uint
+              example: 1675268413
+            exp:
+              title: JWT Expiration Time
+              description: |
+                The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing. The processing of the "exp" claim requires that the current date/time MUST be before the expiration date/time listed in the "exp" claim.
+              type: number
+              format: uint
+              example: 1675268413
+            jti:
+              title: JWT ID
+              description: |
+                The "jti" (JWT ID) claim provides a unique identifier for the JWT. The identifier value MUST be assigned in a manner that ensures that there is a negligible probability that the same value will be accidentally assigned to a different data object; if the application uses multiple issuers, collisions MUST be prevented among values produced by different issuers as well. The "jti" claim can be used to prevent the JWT from being replayed. The "jti" value is a case- sensitive string.
+              type: string
+              example: f508f17d-8bdb-4c0f-b64e-250253382175
+    problem:
+      title: Problem Details
+      description: A Problem Details object (RFC 7807)
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            An absolute URI that identifies the problem type. When dereferenced, it SHOULD provide
+            human-readable documentation for the problem type.
+          default: about:blank
+        title:
+          type: string
+          description: A short summary of the problem type.
+          example: Internal Server Error
+        status:
+          type: integer
+          format: int32
+          description: |
+            The HTTP status code generated by the origin server for this occurrence of the problem.
+          minimum: 400
+          maximum: 600
+          example: 500
+        detail:
+          type: string
+          description: |
+            A human readable explanation specific to this occurrence of the problem.
+          example: Connection timeout
+        instance:
+          type: string
+          format: uri
+          description: |
+            An absolute URI that identifies the specific occurrence of the problem. It may or may
+            not yield further information if dereferenced.
+    authentication_response:
+      title: Authentication Response
+      description: OIDC Authentication Response
+      type: object
+      properties:
+        code:
+          description: |
+            An opaque value that can be used to redeem tokens from the token endpoint.
+            code is returned if the response_type includes code. The code has a
+            lifetime of 300 seconds.
+          type: string
+        state:
+          description: |
+            The unmodified state value from the Authentication Request.
+          type: string
+        error:
+          description: The error code, if something went wrong.
+          type: string
+        error_description:
+          description: Additional error information (if any).
+          type: string
+    openid-configuration:
+      title: Authorisation Server Metadata
+      description: |
+        This is EBSI's Conformance Testing minimal profile of the OIDC Authorisation Server metadata. It builds on the following specifications:
+        - [OIDC - Provider Metadata](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+        - [OAuth 2.0 Pushed Authorization Requests](https://www.rfc-editor.org/rfc/rfc9126.html)
+        - [SIOPv2 - Provider Metadata](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html#name-self-issued-openid-provider-)
+        - [OID4VP - Authorisation Server Metadata](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#name-authorization-server-metada)
+      type: object
+      required:
+        - issuer
+        - authorization_endpoint
+        - token_endpoint
+        - jwks_uri
+        - scopes_supported
+        - response_types_supported
+        - subject_types_supported
+        - id_token_signing_alg_values_supported
+      properties:
+        issuer:
+          title: Issuer
+          description: |
+            REQUIRED. URL using the https scheme with no query or fragment component that the OP asserts as its Issuer Identifier. MUST be identical to the iss Claim value in ID Tokens issued from this Issuer.
+
+            Note: issuer refers to OpenID Connect issuer or the Authorization Server and not to the Verifiable Credential issuer.
+
+            Ref: [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: string
+          format: URI
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth
+        authorization_endpoint:
+          title: Authorization Endpoint
+          description: |
+            REQUIRED. URL of the OP's OAuth 2.0 Authorization Endpoint [OpenID.Core].
+
+            Ref: [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: string
+          format: URI
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth/authorize
+        token_endpoint:
+          title: Token Endpoint
+          description: |
+            CONDITIONAL. URL of the OP's OAuth 2.0 Token Endpoint.
+
+            Note: This endpoint is REQUIRED unless implicit flow is used.
+
+            Ref: [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: string
+          format: URI
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth/token
+        presentation_definition_endpoint:
+          title: Presentation Definition Endpoint
+          description: |
+            OPTIONAL. URL of the OP's presentation definition endpoint.
+
+            Non-standard (yet). Used in EBSI.
+          type: string
+          format: URI
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth/presentation_definitions
+        jwks_uri:
+          title: JWKS URI
+          description: |
+            REQUIRED. URL of the authorization server's JWK Set [JWK] document. The referenced document contains the signing key(s) the client uses to validate signatures from the authorization server. This URL MUST use the "https" scheme. The JWK Set MAY also contain the server's encryption key(s), which are used by clients to encrypt requests to the server. When both signing and encryption keys are made available, a \"use\" (public key use) parameter value is REQUIRED for all keys in the referenced JWK Set to indicate each key's intended usage.
+
+            Ref: [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: string
+          format: URI
+          example: https://sample.com/oxauth/restv1/jwks
+        scopes_supported:
+          title: Supported Scopes
+          description: |
+            REQUIRED (by SIOP v2). JSON array containing a list of the OAuth 2.0 [RFC6749] scope values that this server supports. The server MUST support the openid scope value. Servers MAY choose not to advertise some supported scope values even when this parameter is used, although those defined in [OpenID.Core] SHOULD be listed, if supported.
+
+            MUST contain 'openid'
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+            - [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html#name-self-issued-openid-provider-)
+          type: array
+          items:
+            description: A list of openid scope values
+            type: string
+          example:
+            - openid
+        response_types_supported:
+          title: Supported Response Types
+          description: |
+            REQUIRED (by SIOP v2). JSON array containing a list of the OAuth 2.0 \"response_type\" values that this authorization server supports. The array values used are the same as those used with the \"response_types\" parameter defined by \"OAuth 2.0 Dynamic Client Registration Protocol\" [RFC7591].
+
+            If SIOP v2 is used: MUST be id_token
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+            - [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html#name-self-issued-openid-provider-)
+          type: array
+          items:
+            type: string
+          example:
+            - id_token
+            - vp_token
+        response_mode_supported:
+          title: Supported Response Modes
+          description: |
+            OPTIONAL. JSON array containing a list of the OAuth 2.0 response_mode values that this OP supports, as specified in OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses]. If omitted, the default for Dynamic OpenID Providers is ["query", "fragment"].
+
+            MUST be 'query'
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: array
+          items:
+            type: string
+          example:
+            - query
+            - fragment
+        grant_types_supported:
+          title: Supported Grant Types
+          description: |
+            JSON array containing a list of the OAuth 2.0 grant type values that this authorization server supports. The array values used are the same as those used with the \"grant_types\" parameter defined by \"OAuth 2.0 Dynamic Client Registration Protocol\" [RFC7591]. If omitted, the default value is \"[\"authorization_code\", \"implicit\"]\".
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: array
+          items:
+            type: string
+          example:
+            - authorization_code
+            - implicit
+            - client_credentials
+        subject_types_supported:
+          title: Supported Subject Types
+          description: |
+            REQUIRED. JSON array containing a list of the Subject Identifier types that this OP supports. Valid types include pairwise and public.
+
+            MUST be ['public']
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: array
+          items:
+            type: string
+          example:
+            - public
+        id_token_signing_alg_values_supported:
+          title: ID Token Signing Algorithms
+          description: |
+            REQUIRED. JSON array containing a list of the JWS signing algorithms (alg values) supported by the OP for the ID Token to encode the Claims in a JWT [JWT].
+
+            The algorithm ES256 MUST be included.
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+            - [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
+          type: array
+          items:
+            type: string
+          example:
+            - ES256
+        request_object_signing_alg_values_supported:
+          title: Request Object Signing Algorithms
+          description: |
+            OPTIONAL. JSON array containing a list of the JWS signing algorithms (alg values) supported by the OP for Request Objects, which are described in Section 6.1 of OpenID Connect Core 1.0 [OpenID.Core]. These algorithms are used both when the Request Object is passed by value (using the request parameter) and when it is passed by reference (using the request_uri parameter).
+
+            Servers MUST support none and ES256.
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+            - [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
+          type: array
+          items:
+            type: string
+            enum:
+              - none
+              - ES256
+              - RS256
+              - ES256K
+              - EdDSA
+        request_parameter_supported:
+          title: Supported Request Parameters
+          description: |
+            OPTIONAL. Boolean value specifying whether the OP supports use of the request parameter, with true indicating support. If omitted, the default value is false.
+
+            EBSI: MUST be true
+
+            Ref:
+            - [OIDC](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+          type: boolean
+          example: true
+        token_endpoint_auth_methods_supported:
+          title: Token Endpoint Auth Methods
+          description: |
+            JSON array containing a list of client authentication methods supported by this token endpoint
+
+            MUST contain 'private_key_jwt'
+          type: array
+          items:
+            type: string
+            enum:
+              - private_key_jwt
+        request_uri_parameter_supported:
+          title: Request URI Parameter
+          description: |
+            OPTIONAL. Boolean value specifying whether the OP supports use of the request_uri parameter, with true indicating support. If omitted, the default value is true.
+          type: boolean
+          example: true
+        request_authentication_methods_supported:
+          title: Request Authentication Methods
+          description: |
+            OPTIONAL. A JSON Object defining the client authentications supported for each endpoint. The endpoint names are defined in the IANA "OAuth Authorization Server Metadata" registry [IANA.OAuth.Parameters]. Other endpoints and authentication methods are possible if made recognizable according to established standards and not in conflict with the operating principles of this specification. In OpenID Connect Core, no client authentication is performed at the authentication endpoint. Instead, because the request itself is authenticated. What it amounts to is that the OP maps information in the request (like the redirect_uri) to information it has gained on the client through static or dynamic registration. If the map is successful, the request can be processed. If the RP uses Automatic Registration, as defined in Section 10.1, the OP has no prior knowledge of the RP. Therefore, the OP must start by gathering information about the RP using the process outlined in Section 6. Once it has the RP's metadata, the OP can verify the request in the same way as if it had known the RP's metadata beforehand. To make the request verification more secure, we demand the use of a client authentication or verification method that proves that the RP is in possession of a key that appears in the RP's metadata.
+
+            Reference: <https://openid.net/specs/openid-connect-federation-1_0.html#name-op-metadata>
+          type: object
+          properties:
+            authorization_endpoint:
+              description: |
+                MUST be present. The value MUST be 'request_object'
+              type: array
+              items:
+                type: string
+                enum:
+                  - request_object
+        vp_formats_supported:
+          title: Supported VP Formats
+          description: |
+            REQUIRED. An object containing a list of key value pairs, where the key is a string identifying a credential format supported by the AS. Valid credential format identifiers values are defined in Annex E of [OpenID.VCI]. Other values may be used when defined in the profiles of this specification.
+          type: object
+          properties:
+            jwt_vp:
+              title: JWC VP
+              type: object
+              properties:
+                alg_values_supported:
+                  description: |
+                    An object where the value is an array of case sensitive strings that identify the cryptographic suites that are supported. Cryptosuites for Verifiable Presentations.
+
+                    MUST contain ES256
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - ES256
+            jwt_vc:
+              title: JWC VC
+              type: object
+              properties:
+                alg_values_supported:
+                  description: |
+                    An object where the value is an array of case sensitive strings that identify the cryptographic suites that are supported. Cryptosuites for Verifiable Credentials in jwt_vc_json, json_vc_json-ld, jwt_vp_json, json_vp_json-ld formats should use algorithm names defined in IANA JOSE Algorithms Registry. Cryptosuites for Verifiable Credentials in ldp_vc and ldp_vp format should use signature suites names defined in Linked Data Cryptographic Suite Registry. Cryptosuites for Verifiable Credentials in mso_mdoc format should use signature suites names defined in ISO/IEC 18013-5:2021. Parties using other credential formats will need to agree upon the meanings of the values used, which may be context-specific.
+
+                    MUST contain ES256
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - ES256
+        subject_syntax_types_supported:
+          title: Supported Subject Syntax Types
+          description: |
+            REQUIRED. A JSON array of strings representing URI scheme identifiers and optionally method names of supported Subject Syntax Types defined in {#sub-syntax-type}. When Subject Syntax Type is JWK Thumbprint, valid value is urn:ietf:params:oauth:jwk-thumbprint defined in [RFC9278]. When Subject Syntax Type is Decentralized Identifier, valid values MUST be a did: prefix followed by a supported DID method without a : suffix. For example, support for the DID method with a method-name "example" would be represented by did:example. Support for all DID methods listed in Section 13 of [DID_Specification_Registries] is indicated by sending did without any method-name.
+
+            Reference: https://openid.net/specs/openid-connect-self-issued-v2-1_0.html
+
+            MUST contain: did:ebsi, did:key
+          type: array
+          items:
+            type: string
+            format: URI
+          example:
+            - did:ebsi
+            - did:key:jwk_jcs-pub
+        subject_syntax_types_discriminations:
+          title: Discriminations of Subject Syntax Types
+          description: Specific to EBSI.
+          type: array
+          items:
+            type: string
+            format: URI
+          example:
+            - did:key:jwk_jcs-pub
+            - did:ebsi:v1
+        subject_trust_frameworks_supported:
+          title: Supported Trust Frameworks
+          description: |
+            REQUIRED. A JSON array of supported trust frameworks.
+
+            MUST contain: 'ebsi'
+          type: array
+          items:
+            type: string
+          example:
+            - ebsi
+        id_token_types_supported:
+          title: Supported ID Token types
+          description: |
+            OPTIONAL. A JSON array of strings containing the list of ID Token types supported by the OP, the default value is attester_signed_id_token. The ID Token types defined in this specification are:
+              subject_signed_id_token: Self-Issued ID Token, i.e. the id token is signed with key material under the end-user's control.
+
+              attester_signed_id_token: the id token is issued by the party operating the OP, i.e. this is the classical id token as defined in [OpenID.Core].
+
+              MUST be subject_signed_id_token
+          type: array
+          items:
+            type: string
+            enum:
+              - subject_signed_id_token
+              - attester_signed_id_token
+    openid-credential-issuer:
+      title: Credential Issuer Metadata
+      description: |
+        This is EBSI's Conformance Testing minimal credential issuer dataset.
+        It builds on the following specifications:
+
+        - [OID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
+
+        Credential Issuers publishing Metadata MUST make a JSON document available at the path formed by concatenating the string /.well-known/openid-credential-issuer to the Credential Issuer identifier. openid-credential-issuer MUST point to a JSON document compliant with this specification and MUST be returned using the application/json content type.
+      type: object
+      required:
+        - credential_issuer
+        - credential_endpoint
+        - deferred_credential_endpoint
+        - credentials_supported
+      properties:
+        credential_issuer:
+          title: Credential Issuer
+          description: |
+            REQUIRED. The issuer's server identifier, which is a URL that uses the "https" scheme and has no query or fragment components. Authorization server metadata is published at a location that is ".well-known" according to RFC 5785 [RFC5785]. If the issuer server acts as an authorisation server, this identifier is also used as the authorisation server identifier.
+
+            Note: If the 'authorization_server' claim is not present, Credential Issuer is also acting as Authorisation Server. AS configuration is defined by the 'OpenID Connect Authorisation Server Metadata'
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/issuer
+        authorization_server:
+          title: Authorisation Server
+          description: |
+            OPTIONAL. Used if the issuer relies on another authorisation server. The authorization server's issuer identifier, which is a URL that uses the "https" scheme and has no query or fragment components. Authorization server metadata is published at a location that is ".well-known" according to RFC 5785 [RFC5785].
+
+            If this element is omitted, the entity providing the Credential Issuer is also acting as AS, i.e. the Credential Issuer's identifier is used as the OAuth Issuer value to obtain the authorization server metadata as per [RFC8414].
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth
+        credential_endpoint:
+          title: Credential Endpoint
+          description: |
+            REQUIRED. URL of the Credential Issuer's Credential Endpoint. This URL MUST use the https scheme and MAY contain port, path and query parameter components.
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/tnt/credential
+        deferred_credential_endpoint:
+          title: Deferred Credential Endpoint
+          description: |
+            REQUIRED. URL of the Credential Issuer's Deferred Credential Endpoint. This URL MUST use the https scheme and MAY contain port, path and query parameter components.
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/tnt/credential_deferred
+        credentials_supported:
+          description: |
+            REQUIRED. A JSON array containing a list of JSON objects, each of them representing metadata about a separate credential type that the Credential Issuer can issue.
+          type: array
+          items:
+            description: Metadata about the credential type that the credential issuer can issue
+            type: object
+            required:
+              - format
+              - trust_framework
+            properties:
+              format:
+                description: |
+                  A JSON string identifying the format of this credential, e.g. jwt_vc or ldp_vc. Depending on the format value, the Supported Credentials Object contains further elements defining the type and (optionally) particular claims the credential may contain, and information how to display the credential. Appendix E defines Credential Format Profiles introduced by this specification.
+
+                  MUST be 'jwt_vc'
+                type: string
+                enum:
+                  - jwt_vc
+              trust_framework:
+                title: Supported Trust Frameworks
+                description: |
+                  REQUIRED: A JSON object with information about the supported trust frameworks. The 'name' property must uniquely define the trust framework.
+
+                  'name' claim MUST be 'ebsi'
+                type: object
+                required:
+                  - name
+                  - type
+                  - uri
+                properties:
+                  name:
+                    title: Unique Trust Framework name
+                    type: string
+                    example: ebsi
+                  type:
+                    title: Credential type
+                    type: string
+                    example: Accreditation
+                  uri:
+                    title: Accreditation URI
+                    description: |
+                      Link to the Verifiable Accreditation based on which the VC is issued
+                    type: string
+                    format: URI
+              display:
+                title: Display
+                description: |
+                  OPTIONAL. An array of objects, where each object contains display properties of a Credential Issuer for a certain language. Below is a non-exhaustive list of valid parameters that MAY be included:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: |
+                        OPTIONAL. String value of a display name for the Credential Issuer.
+                      type: string
+                      example: Verifiable Authorisation to onboard
+                    locale:
+                      description: |
+                        OPTIONAL. String value that identifies the language of this object represented as a language tag taken from values defined in BCP47 [RFC5646]. There MUST be only one object with the same language identifier
+                      type: string
+                      example: en-GB
+    authorisation_request_object:
+      title: Authentication Request Object
+      description: |
+        OpenID Connect Authorisation Request Object. The Request Object MUST be signed.
+
+        Signing algorithm ES256 MUST be supported. To perform Signature Validation, the alg Header Parameter in the JOSE Header MUST match the value of the request_object_signing_alg set during Client Registration [OpenID.Registration] or a value that was pre-registered by other means. The signature MUST be validated against the appropriate key for that client_id and algorithm.
+
+        The Authorization Server MUST return an error if signature validation fails.
+
+        References:
+          - [OIDC.core](https://openid.net/specs/openid-connect-core-1_0.html)
+          - [OID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-10.html)
+          - [VC Data Model](https://www.w3.org/TR/2022/REC-vc-data-model-20220303/)
+      type: object
+      required:
+        - iss
+        - aud
+        - exp
+        - scope
+        - response_type
+        - client_id
+        - redirect_uri
+      properties:
+        iss:
+          title: JWT Issuer Claim
+          description: |
+            The "iss" (issuer) claim identifies the actor who issued the JWT. The value MUST be the value of the client_id claim.
+          type: string
+          format: URL
+          example: 'https://my-issuer.eu/suffix/xyz"'
+        aud:
+          title: JWT Audience Claim
+          description: |
+            The "aud" (audience) claim identifies the recipients that the JWT is intended for. The value MUST be the issuer's URL as defined in Issuer's OpenID-Configuration.issuer
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth
+        exp:
+          title: JWT Expiration Time
+          description: |
+            The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing.  The processing of the "exp" claim requires that the current date/time MUST be before the expiration date/time listed in the "exp" claim.
+          type: number
+          format: UNIX timestamp
+        scope:
+          title: scope
+          description: |
+            OpenID Connect requests MUST contain the openid scope value. If the openid scope value is not present, the behavior is entirely unspecified. Other scope values MAY be present. Scope values used that are not understood by an implementation SHOULD be ignored. See Sections 5.4 and 11 of OIDC.core for additional scope values defined by this specification.
+
+            MUST match the value in the request URI.
+          type: string
+          example: openid
+        client_id:
+          title: Client ID
+          description: |
+            MUST match the value of the client_id in the REQUEST URI.
+          type: string
+          format: URI
+        response_type:
+          title: Response Type
+          description: |
+            REQUIRED. OAuth 2.0 Response Type value that determines the authorization processing flow to be used, including what parameters are returned from the endpoints used. When using the Authorization Code Flow, this value is code.
+
+            MUST be 'code' and MUST match the value of response_type in the request URI.
+          type: string
+          example: code
+        redirect_uri:
+          title: Redirect URI
+          description: |
+            Callback location where the authorization code or tokens should be sent.
+
+            MUST match the value of redirect_uri in the request URI.
+          type: string
+          format: URI
+          example: https://example.com/token
+        state:
+          title: State
+          description: |
+            RECOMMENDED. Opaque value used to maintain state between the request
+            and the callback. Typically, Cross-Site Request Forgery (CSRF, XSRF)
+            mitigation is done by cryptographically binding the value of this
+            parameter with a browser cookie.
+        authorization_details:
+          title: OID4VCI Authorisation Details
+          description: OID authorisation details data model.
+          type: array
+          items:
+            description: |
+              A list of authorisation details.
+            type: object
+            required:
+              - type
+              - format
+              - locations
+            properties:
+              type:
+                title: Authorisation Details Type
+                description: |
+                  JSON string that determines the authorization details type.
+
+                  MUST be set to openid_credential for the purpose of this specification.
+                type: string
+                example: openid_credential
+              format:
+                title: VC Format
+                description: |
+                  JSON string representing a format in which the credential is requested to be issued. The value MUST be jwt_vc
+                type: string
+                enum:
+                  - jwt_vc
+                example: jwt_vc
+              locations:
+                title: Credential Issuer Identifier values
+                description: |
+                  If the Credential Issuer metadata contains an authorization_server parameter, the authorization detail's locations common data field MUST be set to the Credential Issuer Identifier value.
+                type: array
+                items:
+                  type: string
+                  format: URL
+                example:
+                  - https://api-conformance.ebsi.eu/conformance/v3/issuer
+              types:
+                title: VC Type
+                description: |
+                  REQUIRED. JSON array designating the types a certain credential type supports according to [VC_DATA](https://www.w3.org/TR/2022/REC-vc-data-model-20220303/), Section 4.3.
+
+                  It MUST contain a recognised VC type.
+                type: array
+                items:
+                  type: string
+                example:
+                  - VerifiableCredential
+                  - VerifiableAttestation
+                  - VerifiableAuthorisationToOnboard
+                  - VerifiableAuthorisationForTrustChain
+                  - VerifiableAccreditationToAttest
+                  - VerifiableAccreditationToAccredit
+    id_token_request_object:
+      title: ID Token Request Object
+      description: |
+        ID Token Request is returned by the Authorisation Server to the client to request a SIOP ID Token or a VP token and with it a proof of DID control. It is an OpenID Connect Authorisation Request Object. The Request Object MUST be signed.
+
+        Signing algorithm ES256 MUST be supported. To perform Signature Validation, the alg Header Parameter in the JOSE Header MUST match the value of the Authorisation Server signing keys, which are discoverable through the jwks_uri claim in the Authorisation Server configuration.
+
+        The client MUST NOT proceed with the protocol if the signature validation fails.
+
+        References:
+          - [OIDC.core](https://openid.net/specs/openid-connect-core-1_0.html)
+          - [OID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-10.html)
+          - [VC Data Model](https://www.w3.org/TR/2022/REC-vc-data-model-20220303/)
+      type: object
+      required:
+        - iss
+        - aud
+        - exp
+        - scope
+        - nonce
+        - response_type
+        - response_mode
+        - client_id
+        - redirect_uri
+      properties:
+        iss:
+          title: JWT Issuer Claim
+          description: |
+            The "iss" (issuer) claim identifies the actor who issued the JWT. The value MUST be the value of the issuer in the Authorisation Server's metadata (.well-known/openid-configuration)
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth
+        aud:
+          title: JWT Audience Claim
+          description: |
+            The "aud" (audience) claim identifies the recipients that the JWT is intended for. The value MUST be the client_id from the Authentication Request sent by the client.
+          type: string
+          format: URL
+          example: 'https://my-issuer.eu/suffix/xyz"'
+        exp:
+          title: JWT Expiration Time
+          description: |
+            The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing.  The processing of the "exp" claim requires that the current date/time MUST be before the expiration date/time listed in the "exp" claim.
+          type: number
+          format: UNIX timestamp
+        scope:
+          title: scope
+          description: |
+            OpenID Connect requests MUST contain the openid scope value. If the openid scope value is not present, the behavior is entirely unspecified. Other scope values MAY be present. Scope values used that are not understood by an implementation SHOULD be ignored. See Sections 5.4 and 11 of OIDC.core for additional scope values defined by this specification.
+
+            MUST match tha value in the request URI.
+          type: string
+          example: openid
+        client_id:
+          title: Client ID
+          description: |
+            MUST match the "iss" value.
+          type: string
+          format: URI
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth
+        response_type:
+          title: Response Type
+          description: |
+            The SIOP must return an ID Token.
+
+            MUST be 'id_token'
+          type: string
+          example: id_token
+        response_mode:
+          title: Response Mode
+          description: |
+            In this mode, Authorization Response parameters are encoded in the body using the application/x-www-form-urlencoded content type and sent using the HTTP POST method instead of redirecting back to the Client.
+
+            MUST be 'direct_post'
+          type: string
+          example: direct_post
+        redirect_uri:
+          title: Redirect URI
+          description: |
+            Callback location where the ID Token should be sent.
+
+            MUST match the value of redirect_uri in the request URI.
+          type: string
+          format: URI
+          example: https://example.com/token
+        nonce:
+          title: Nonce
+          description: |
+            REQUIRED. As specified in [Section 3.1.2. of OpenID.Core](https://openid.net/specs/openid-connect-core-1_0.html#AuthorizationEndpoint) String value used to associate a Client session with an ID Token, and to mitigate
+            replay attacks.
+          type: string
+          example: b98be7bf
+    id_token_direct_post:
+      title: ID Token Response
+      description: |
+        ID Token as sent to the direct post endpoint of the Authorisation Server.
+      type: object
+      properties:
+        header:
+          description: JWT Header
+          type: object
+          required:
+            - typ
+            - alg
+            - kid
+          properties:
+            typ:
+              description: Payload type
+              type: string
+              enum:
+                - JWT
+            alg:
+              description: |
+                Signing Algorithm. ES256 algorithm MUST be supported, other algorithms may be supported.
+              type: string
+              enum:
+                - ES256
+                - ES256K
+                - RS256
+                - EdDSA
+            kid:
+              description: |
+                Signing Key Identifier. It MUST be a valid EBSI-compliant DID.
+              type: string
+              format: URI
+        payload:
+          description: JWT Payload
+          type: object
+          required:
+            - iss
+            - sub
+            - aud
+            - iat
+            - exp
+            - nonce
+          properties:
+            iss:
+              title: JWT Issuer
+              description: |
+                The "iss" (issuer) claim identifies the actor who issued the JWT. iss MUST be the DID of the client.
+              type: string
+              format: URL
+              example: https://my-issuer.eu/suffix/xyz
+            sub:
+              title: JWT Subject
+              description: |
+                Identifier that identifies the user the ID Token is about. Value MUST be the DID and must match the iss claim.
+              type: string
+              format: URL
+              example: https://my-issuer.eu/suffix/xyz
+            aud:
+              title: JWT Audience (the recipient)
+              description: |
+                The "aud" (audience) claim identifies the recipients that the JWT is intended for. The value MUST be Authorisation Server's id - the issuer claim in the openid-configuration of the Authorisation Server.
+              type: string
+              format: URL
+              example: https://api-conformance.ebsi.eu/conformance/v3/auth
+            iat:
+              title: JWT Issuance Time
+              description: |
+                Time at which the JWT was issued.
+              type: number
+              format: uint
+              example: 1675268413
+            exp:
+              title: JWT Expiration Time
+              description: |
+                The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing. The processing of the "exp" claim requires that the current date/time MUST be before the expiration date/time listed in the "exp" claim.
+              type: number
+              format: uint
+              example: 1675268413
+            nonce:
+              title: JWT Nonce
+              description: |
+                Value used to associate a Client session with an ID Token. The value MUST match the nonce from the ID Token Request.
+              type: string
+              example: n-0S6_WzA2Mj
+    jwks:
+      title: JSON Web Key Set
+      required:
+        - keys
+      type: object
+      description: |
+        JSON Web Key Set (JWKS) - A JSON object that represents a set of JWKs. The JSON object MUST have a keys member, which is an array of JWKs.
+      properties:
+        keys:
+          type: array
+          description: |
+            List of JSON Web Key (JWK) - A JSON object that represents a cryptographic key. The members of the object represent properties of the key, including its value.
+          items:
+            title: JSON Web Key
+            required:
+              - kty
+            type: object
+            properties:
+              kty:
+                type: string
+              crv:
+                type: string
+              alg:
+                type: string
+              n:
+                type: string
+              e:
+                type: string
+              x:
+                type: string
+              y:
+                type: string
+              kid:
+                type: string
+      example:
+        keys:
+          - kty: EC
+            crv: P-256
+            alg: ES256
+            x: FMWOWBx2VroVMZVmn-TOU_943V7eYKQDl3GpDFjLQd4
+            y: 7EGGmZW9ZhhJQUxSPH3_mpbxyNvC5eeBchGPkccZmGk
+            kid: FLxI3LM8mFCFCD1H4VjZqWt1Pfid2i8ACYiDvEzZ9UM
+    id_token_request:
+      title: ID Token Request
+      description: |
+        The  Auth server will validate the request and will proceed by requesting authentication of a DID from the client. The ID Token Request is also an Authorisation Request, and it is using signed Request Object. The Request Object is signed with Auth Server private keys, which are discoverable through jwks_uri parameter. The request is using response_mode=direct_post and the response location is delivered in redirect_uri.
+
+        Token Request Object is defined in the 'ID Token Request Object' schema
+      type: object
+      required:
+        - scope
+        - response_type
+        - client_id
+        - redirect_uri
+      properties:
+        scope:
+          title: scope
+          description: |
+            REQUIRED. OpenID Connect requests MUST contain the openid scope value. If the openid scope value is not present, the behavior is entirely unspecified.
+
+            MUST be openid.
+          type: string
+          example: openid
+        response_type:
+          title: Response Type
+          description: |
+            REQUIRED. OAuth 2.0 Response Type value that determines the authorization processing flow to be used, including what parameters are returned from the endpoints used. When using the Authorization Code Flow, this value is code.
+
+            MUST be 'id_token'
+          type: string
+          example: id_token
+        client_id:
+          title: Client ID
+          description: |
+            OAuth 2.0 Client Identifier valid at the Authorization Server.
+
+            Verifiable Accreditation Issuance: MUST be URL of the issuer requesting the accreditation that was registered with the Accreditation Issuer
+          type: string
+          format: URL
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth
+        redirect_uri:
+          title: Redirect URI
+          description: |
+            REQUIRED. Redirection URI to which the response (direct post) will be sent. This URI MUST exactly match one of the Redirection URI values in the Authorisation Server configuration -- definition is taken from
+          type: string
+          format: URI
+          example: https://api-conformance.ebsi.eu/conformance/v3/auth/direct_post
+        request:
+          title: Request
+          description: |
+            CONDITIONAL. Authorisation Request Object - The Request Object must be signed with the client's private keys, owned by the requesting client_id. The used private key's public key must be discoverable through client's openid-configuration through jwks_uri parameter.
+
+            See the ID Token Request Object schema.
+
+            One of `request` or `request_uri` MUST be present.
+          type: string
+          format: '^(([A-Za-z0-9\-_])+\.)([A-Za-z0-9\-_]+)(\.([A-Za-z0-9\-_]+))?$'
+          example: |
+            eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImM0S3JlcEpYem1CTVctcW8ybnREQ3drVGdMbTJDYl81ZWFiemtsalRoXzAifQ.eyJpc3MiOiJodHRwczovL2FwaS5jb25mb3JtYW5jZS5lYnNpLmV1L2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jayIsImF1ZCI6Imh0dHBzOi8vbXktaXNzdWVyLmV1L3N1ZmZpeC94eXoiLCJleHAiOjE1ODk2OTkxNjIsInJlc3BvbnNlX3R5cGUiOiJpZF90b2tlbiIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdCIsImNsaWVudF9pZCI6Imh0dHBzOi8vYXBpLmNvbmZvcm1hbmNlLmVic2kuZXUvY29uZm9ybWFuY2UvdjMvYXV0aC1tb2NrIiwicmVkaXJlY3RfdXJpIjoiaHR0cHM6Ly9hcGkuY29uZm9ybWFuY2UuZWJzaS5ldS9jb25mb3JtYW5jZS92My9hdXRoLW1vY2svZGlyZWN0X3Bvc3QiLCJzY29wZSI6Im9wZW5pZCIsIm5vbmNlIjoibi0wUzZfV3pBMk1qIn0.YZVxzzD-RnNoo5ocQxhHHgv0Vie7zypOjm_EmdBjYy5OSKdRAjY5ehdvKrIVjW3L4XZjhOiWhvi-J73Ph6HbPA
+        request_uri:
+          title: Request URI
+          description: |
+            CONDITIONAL. This parameter enables OpenID Connect requests to be passed by reference, rather than by value. The request_uri value is a URL using the https scheme referencing a resource containing a Request Object value, which is a JWT containing the request parameters.
+            See the ID Token Request Object schema.
+
+            One of `request` or `request_uri` MUST be present.
+          type: string
+          format: URI
+      example:
+        scope: openid
+        response_type: id_token
+        client_id: https://api-conformance.ebsi.eu/conformance/v3/auth
+        redirect_uri: https://api-conformance.ebsi.eu/conformance/v3/auth/cb
+        request: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImM0S3JlcEpYem1CTVctcW8ybnREQ3drVGdMbTJDYl81ZWFiemtsalRoXzAifQ.eyJpc3MiOiJodHRwczovL2FwaS5jb25mb3JtYW5jZS5lYnNpLmV1L2NvbmZvcm1hbmNlL3YzL2F1dGgtbW9jayIsImF1ZCI6Imh0dHBzOi8vbXktaXNzdWVyLmV1L3N1ZmZpeC94eXoiLCJleHAiOjE1ODk2OTkxNjIsInJlc3BvbnNlX3R5cGUiOiJpZF90b2tlbiIsInJlc3BvbnNlX21vZGUiOiJkaXJlY3RfcG9zdCIsImNsaWVudF9pZCI6Imh0dHBzOi8vYXBpLmNvbmZvcm1hbmNlLmVic2kuZXUvY29uZm9ybWFuY2UvdjMvYXV0aC1tb2NrIiwicmVkaXJlY3RfdXJpIjoiaHR0cHM6Ly9hcGkuY29uZm9ybWFuY2UuZWJzaS5ldS9jb25mb3JtYW5jZS92My9hdXRoLW1vY2svZGlyZWN0X3Bvc3QiLCJzY29wZSI6Im9wZW5pZCIsIm5vbmNlIjoibi0wUzZfV3pBMk1qIn0.YZVxzzD-RnNoo5ocQxhHHgv0Vie7zypOjm_EmdBjYy5OSKdRAjY5ehdvKrIVjW3L4XZjhOiWhvi-J73Ph6HbPA
+    access_token_response:
+      title: Access Token Response
+      type: object
+      description: Access Token Response
+      required:
+        - access_token
+        - id_token
+        - token_type
+        - expires_in
+        - c_nonce
+        - c_nonce_expires_in
+      properties:
+        access_token:
+          title: Access Token
+          description: |
+            The access token issued by the authorization server.
+
+            The Access Token MUST be signed by the authorisation server.
+          type: string
+          format: JWS
+        id_token:
+          title: ID Token
+          description: |
+            The ID token issued by the authorization server.
+          type: string
+          format: JWS
+        token_type:
+          title: Token Type
+          description: |
+            The access token type provides the client with the information required to successfully utilize the access token to make a protected resource request (along with type-specific attributes).
+          type: string
+          enum:
+            - bearer
+        expires_in:
+          title: Expires in
+          type: integer
+          description: |
+            The lifetime in seconds of the access token. For example, the value \"3600\" denotes that the access token will expire in one hour from the time the response was generated.
+
+            Lifetime must be 86400 seconds.
+        c_nonce:
+          title: Challenge Nonce
+          description: |
+            JSON string containing a nonce to be used to create a proof of possession of key material when requesting a Credential (see Section 7.2 of OpenID for VCI). When received, the Wallet MUST use this nonce value for its subsequent credential requests until the Credential Issuer provides a fresh nonce.
+          type: string
+        c_nonce_expires_in:
+          title: Challenge Nonce expires in
+          type: integer
+          description: |
+            The lifetime in seconds of the c_nonce token. For example, the value \"3600\" denotes that the access token will expire in one hour from the time the response was generated.
+    token_request:
+      title: Token Request
+      description: |
+        A Client makes a Token Request by presenting its Authorization Grant (in the form of an Authorization Code) to the Token Endpoint using the grant_type value authorization_code
+      type: object
+      required:
+        - grant_type
+      properties:
+        grant_type:
+          title: Grant Type
+          description: |
+            MUST have the value `authorization_code` or `urn:ietf:params:oauth:grant-type:pre-authorized_code`
+          type: string
+          enum:
+            - authorization_code
+            - urn:ietf:params:oauth:grant-type:pre-authorized_code
+        client_id:
+          title: Client ID
+          description: |
+            REQUIRED when `grant_type` is `authorization_code`.
+
+            OAuth 2.0 Client Identifier valid at the Authorization Server.
+
+            Verifiable Accreditation Issuance: MUST be URL of the issuer requesting the accreditation that was registered with the Accreditation Issuer
+          type: string
+          format: URL
+        code:
+          title: Authorisation Code
+          description: |
+            REQUIRED when `grant_type` is `authorization_code`.
+
+            An opaque value that can be used to redeem tokens from the token endpoint.
+
+            `code` is returned if the `response_type` includes `code`. The code has a lifetime of 300 seconds.
+            It MUST match the value from the authentication response.
+          type: string
+        client_assertion_type:
+          title: Client Assertion Type
+          description: |
+            The format of the assertion as defined by the authorization server.  The value will be an absolute URI.
+          schema:
+            type: boolean
+          example: true
+        code_verifier:
+          title: Code TnT
+          description: |
+            Wallet generated secure random token, used to validate the original `code_challenge` provided in initial Authorisation Request.
+          schema:
+            type: string
+          example: QER5PeLTrvoJakGLzYJmL78ngOdP4AlVX_FG1d4Va22XuOYKFtEt1yQyRtD6-gfd47g
+        pre-authorized_code:
+          title: Pre-authorized code
+          description: |
+            CONDITIONAL. The code representing the authorization to obtain Credentials of a certain type.
+            This parameter is required if the `grant_type` is `urn:ietf:params:oauth:grant-type:pre-authorized_code`.
+            In WCT v3 Holder wallet tests, the code corresponds to the string concatenation of the last 4 bytes (modulo 10) of the sha256 hash of the user DID.
+            Example: the code corresponding to the DID `did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbsDbVZXdb3jzCagESyY4EE2x7Yjx3gNwctoEuRCKKDrdNP3HPFtG8RTvBiYStT5ghBHhHizH2Dy6xQtW3Pd2SecizL9b2jzDCMr7Ka5cRAWZFwvqwAtwTT7xet769y9ERh6` is "5910".
+          schema:
+            type: string
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6Ink2UTFUTWN4am4zU1ZDT0dNUm9mZHA0M1owU0tGMVROSTkwcG5CWldSZkkifQ.eyJjbGllbnRfaWQiOiJkaWQ6a2V5OnoyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnAyNzlvbUFRdW5ac1g4NXEydG5WdUR6Wk1BZzlSa3NFRTN6UmFxWkVOWWRwWkt2ZVpxOWZXTlZlY0IySlNMbllFTVI4cHFwWXNxZUZaTG5KeGdiUlVtV3d1N1Y5aG8xMkdSUGRrekVaR2JmNDdodTI2NHJYQUppS3g0dUxkRW50UTQiLCJhdXRob3JpemF0aW9uX2RldGFpbHMiOlt7InR5cGUiOiJvcGVuaWRfY3JlZGVudGlhbCIsImZvcm1hdCI6Imp3dF92YyIsImxvY2F0aW9ucyI6WyJodHRwOi8vbG9jYWxob3N0OjMwMDAvY29uZm9ybWFuY2UvdjMvaXNzdWVyLW1vY2siXSwidHlwZXMiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJWZXJpZmlhYmxlQXR0ZXN0YXRpb24iLCJDVFdhbGxldENyb3NzUHJlQXV0aG9yaXNlZCJdfV0sImlhdCI6MTY4MjU5MTM3OSwiZXhwIjoxNjgyNTkxNjc5LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAvY29uZm9ybWFuY2UvdjMvaXNzdWVyLW1vY2siLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAvY29uZm9ybWFuY2UvdjMvYXV0aC1tb2NrIiwic3ViIjoiZGlkOmtleTp6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2JwMjc5b21BUXVuWnNYODVxMnRuVnVEelpNQWc5UmtzRUUzelJhcVpFTllkcFpLdmVacTlmV05WZWNCMkpTTG5ZRU1SOHBxcFlzcWVGWkxuSnhnYlJVbVd3dTdWOWhvMTJHUlBka3pFWkdiZjQ3aHUyNjRyWEFKaUt4NHVMZEVudFE0In0.Het3grzaEhEkr3tQPgyjx7cNTI8G7hKdODJaOFlemKk-PkVEmxtmaeolNo1M1kXyQe20hD3RFt81FCl6n_MA9Q
+        user_pin:
+          title: User PIN
+          description: |
+            OPTIONAL. String value containing a user PIN.
+            This value MUST be present if `user_pin_required` was set to `true` in the Credential Offer.
+            The string value MUST consist of maximum 8 numeric characters (the numbers 0 - 9).
+            This parameter MUST only be used if the `grant_type` is `urn:ietf:params:oauth:grant-type:pre-authorized_code`.
+          schema:
+            type: string
+          example: "1234"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

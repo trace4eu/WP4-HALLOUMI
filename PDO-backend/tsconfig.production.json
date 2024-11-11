@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "removeComments": true,
+    "outDir": "./distprod",
+  },
+  "exclude": ["node_modules", "dist", "tests", "src/**/*.spec.ts"]
+}
