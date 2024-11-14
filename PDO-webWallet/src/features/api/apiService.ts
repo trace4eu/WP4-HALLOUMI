@@ -1,7 +1,8 @@
 import qs from 'qs';
 import jose from 'node-jose';
-import axios, {AxiosError, AxiosResponse} from 'axios';
+import axios, {AxiosError, AxiosRequestConfig, AxiosResponse} from 'axios';
 import jwt_decode from 'jwt-decode';
+import {JWK} from 'jose';
 import {TokenParams, Payload, generateToken} from '../../helpers/generateToken';
 import WalletModel from '../../models/WalletModel';
 import codeChallenge, {codeVerifier} from '../../helpers/codeChallenge';
@@ -16,10 +17,14 @@ import {
   walletKnownCard,
 } from '../../types/typeCredential';
 import {VCtype} from '../../screens/Wallet';
-import {initBanchType} from '../../types/newBatchTypes';
+import {initBanchType, initBatchResponseType, ReqEventsRespType} from '../../types/newBatchTypes';
+import {Actor} from '../../components/BatchComponent';
+import {EventDetailsType, pendingTaskType} from '../../types/pendingTaskType';
+import {presentationSubmission} from '../../helpers/presentationSubmission';
+import getVerifiablePresentationJwt from '../../helpers/getVerifiablePresentationJwt';
 
-axios.defaults.timeout = 17000;
-const abortTimeout = 17000;
+axios.defaults.timeout = 25000;
+const abortTimeout = 25000;
 
 interface ValidationError {
   message: string;
@@ -112,6 +117,43 @@ export default class ApiService {
 
     // axios.defaults.timeout = 13000;
     console.log('apiservice init->' + this.walletinstance);
+  }
+
+  // Centralized error handler
+  private _handleError(error: unknown): never {
+    const axiosError = error as AxiosError;
+    if (axiosError.response) {
+      const errorData = axiosError.response.data as errorResponseData;
+      let errorDetails = errorData.detail;
+      const parsedDetail = JSON.parse(errorData.detail);
+
+      if (Array.isArray(parsedDetail)) {
+        errorDetails = parsedDetail.join(', ');
+      }
+      const errorMessage = `${errorData.title || 'Request error '}: \n ${errorDetails}`;
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (error instanceof Error) {
+      throw new Error('Request error:  \n' + error.message);
+    } else {
+      console.error('Network or other error', error);
+      throw new Error('An unexpected error occurred');
+    }
+  }
+
+  // Reusable request method
+  private async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const configWithSignal: AxiosRequestConfig = {
+      ...config,
+      signal: AbortSignal.timeout(abortTimeout),
+    };
+
+    try {
+      return await axios(configWithSignal);
+    } catch (error) {
+      this._handleError(error);
+    }
   }
 
   async getPayload(url: string) {
@@ -847,67 +889,79 @@ export default class ApiService {
   }
 
   async getRequiredEvents(productName: string) {
-    let getRequiredEventsResponse;
-    try {
-      getRequiredEventsResponse = await axios.get(
-        `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/products`,
-        {
-          params: {productName: productName},
-          signal: AbortSignal.timeout(abortTimeout),
-        }
-      );
-    } catch (e) {
-      console.error('Get Required Events request error: ', e);
-      throw new Error('Get Required Events request error');
-    }
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/products`,
+      params: {productName},
+    };
 
-    return getRequiredEventsResponse?.data;
+    const getRequiredEventsResponse = await this.request(config);
+
+    return getRequiredEventsResponse?.data as ReqEventsRespType;
   }
 
   async getActiveActors(productName: string) {
-    let getActiveActorsResponse;
-    try {
-      getActiveActorsResponse = await axios.get(
-        `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/active_actors`,
-        {
-          params: {productName: productName},
-          signal: AbortSignal.timeout(abortTimeout),
-        }
-      );
-    } catch (e) {
-      console.error('Get Active Actors request error: ', e);
-      throw new Error('Get Active Actors request error');
-    }
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/active_actors`,
+      params: {productName},
+    };
 
-    return getActiveActorsResponse?.data;
+    const getActiveActorsResponse = await this.request(config);
+    return getActiveActorsResponse?.data as Actor[];
   }
 
   async initNewBatch(initBanchDetails: initBanchType) {
-    let initNewBatchResponse;
     const initNewBatchPostOptions = {
       url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/init_new_batch`,
       method: 'POST',
-      signal: AbortSignal.timeout(abortTimeout),
       headers: {'Content-Type': 'application/json'},
       data: initBanchDetails,
     };
-    try {
-      initNewBatchResponse = await axios(initNewBatchPostOptions);
-    } catch (err) {
-      const axioserr = err as AxiosError;
-      let message = 'init new batch request error: \n';
-      const errorDetail = JSON.parse(
-        (axioserr.response?.data as unknown as errorResponseData).detail
-      ).join(', ');
+    const initNewBatchResponse = await this.request(initNewBatchPostOptions);
+    console.log('init batch resp: ', initNewBatchResponse);
+    return initNewBatchResponse?.data as initBatchResponseType;
+  }
 
-      if (errorDetail) {
-        message = message + errorDetail;
-      }
-      console.error(message);
+  //GET /pendingBatches?productName&actordid&allowedEvent
+  async getPendingBatches(productName: string, actordid: string, allowedEvent: string) {
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/pendingBatches`,
+      params: {productName, actordid, allowedEvent},
+    };
 
-      throw new Error(message);
-    }
+    const getRequiredEventsResponse = await this.request(config);
+    return getRequiredEventsResponse.data as pendingTaskType[];
+  }
 
-    return initNewBatchResponse?.data;
+  async updateBatch(documentId: string, eventDetails: EventDetailsType, jwtvc: string) {
+    const walletDID = this.walletinstance.getDID() as string;
+    const privateKeyJwk = this.walletinstance.getKeys() as JWK;
+    const audience = `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt`;
+    const selectedjwtvcs = [jwtvc];
+    const vpJwt = await getVerifiablePresentationJwt(
+      audience,
+      walletDID,
+      selectedjwtvcs,
+      privateKeyJwk
+    );
+
+    const config: AxiosRequestConfig = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/update_batch`,
+      data: {
+        documentId: documentId,
+        eventDetails: eventDetails,
+        vp_token: vpJwt,
+        presentation_submission: presentationSubmission,
+      },
+    };
+
+    const updateBatchResponse = await this.request(config);
+    console.log('updateBatchResponse: ', updateBatchResponse);
+
+    return updateBatchResponse.data as initBatchResponseType;
   }
 }

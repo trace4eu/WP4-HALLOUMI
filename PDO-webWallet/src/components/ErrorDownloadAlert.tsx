@@ -4,17 +4,24 @@ import AlertTitle from '@mui/material/AlertTitle';
 import Snackbar from '@mui/material/Snackbar';
 
 interface IPropsAlert {
-  message: string;
+  message: string | Error | unknown;
   isErrorWindow: boolean;
   onClose: () => void;
 }
 
 export default function ErrorDownloadAlert({message, isErrorWindow, onClose}: IPropsAlert) {
-  let alertText = message;
+  let alertText = 'Something went wrong.';
+  if (typeof message === 'string') {
+    alertText = message;
 
-  if (message.search('timeout') !== -1) {
-    alertText = 'It is taking too long to get a reply.';
+    if (message.search('timeout') !== -1) {
+      alertText = 'It is taking too long to get a reply.';
+    }
+  } else if (message instanceof Error) {
+    alertText = message.message;
+    if (message.message.includes('canceled')) alertText = 'It is taking too long to get a reply.';
   }
+
   return (
     <Snackbar
       open={isErrorWindow}

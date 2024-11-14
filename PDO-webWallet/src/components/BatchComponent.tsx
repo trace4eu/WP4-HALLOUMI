@@ -1,4 +1,4 @@
-import React, {Dispatch, SetStateAction, useState} from 'react';
+import React, {useState} from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import TableContainer from '@mui/material/TableContainer';
@@ -11,17 +11,16 @@ import TableBody from '@mui/material/TableBody';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import {JWK} from 'jose';
-import {v4 as uuidv4} from 'uuid';
 import {apiService} from '../index';
 import {initBanchType} from '../types/newBatchTypes';
 import getVerifiablePresentationJwt from '../helpers/getVerifiablePresentationJwt';
 import WalletModel from '../models/WalletModel';
-
 import CredentialSaveOrShareOrDeleteAlert from '../components/CredentialSaveOrShareOrDeleteAlert';
 import CircularProgress from '@mui/material/CircularProgress';
 import ErrorDownloadAlert from '../components/ErrorDownloadAlert';
+import {presentationSubmission} from '../helpers/presentationSubmission';
 
-interface Actor {
+export interface Actor {
   actorDID: string;
   legalName: string;
   allowedEvent: string;
@@ -32,10 +31,6 @@ interface SelectedActor extends Actor {
   uniqueId: string;
 }
 
-const PDO_PRESENTATION = 'pdopresentation';
-const LICENSE = 'LicenseToOperate';
-const JWT_VP = 'jwt_vp';
-const JWT_VC = 'jwt_vc';
 const SUCCESS_MSG = 'Batch successfully created!';
 
 const BatchComponent = ({
@@ -126,22 +121,7 @@ const BatchComponent = ({
         notesToActor,
       })),
       vp_token: vpJwt,
-      presentation_submission: {
-        id: uuidv4(), // '00f4c7ee-2934-4db2-adb0-4909652f10d8',
-        definition_id: PDO_PRESENTATION,
-        descriptor_map: [
-          {
-            id: LICENSE,
-            path: '$',
-            format: JWT_VP,
-            path_nested: {
-              id: LICENSE,
-              format: JWT_VC,
-              path: '$.verifiableCredential[0]',
-            },
-          },
-        ],
-      },
+      presentation_submission: presentationSubmission,
     };
 
     try {
@@ -157,7 +137,10 @@ const BatchComponent = ({
       if (batchInitResp.success) {
         setIsInitSuccess(batchInitResp.success);
       } else {
-        throw new Error(batchInitResp.errors.join(', '));
+        if (batchInitResp.errors) throw new Error(batchInitResp.errors.join(', '));
+        else {
+          throw new Error('unexpected error');
+        }
       }
     } catch (error) {
       console.error('Error submitting batch', error);
@@ -202,7 +185,7 @@ const BatchComponent = ({
 
   return (
     <Box>
-      {loading && (
+      {/* {loading && (
         <Box
           sx={{
             height: '100vh',
@@ -219,7 +202,7 @@ const BatchComponent = ({
         >
           <CircularProgress size="8vw" />
         </Box>
-      )}
+      )} */}
       {isInitSuccess && (
         <CredentialSaveOrShareOrDeleteAlert
           isVC={isInitSuccess}

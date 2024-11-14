@@ -12,9 +12,13 @@ import './govcy.uds.min.css';
 import {CredentialStoredType, issuanceCertificateCardDetails} from '../types/typeCredential';
 import {walletModel} from '../index';
 import {useAppDispatch, useAppSelector} from '../features/hooks';
-import {selectedCredential, selectCredentials} from '../features/credentialSlice';
+import {
+  selectedCredential,
+  selectCredentials,
+  selectSingleCredential,
+} from '../features/credentialSlice';
 
-import {useNavigate} from 'react-router-dom';
+// import {useNavigate} from 'react-router-dom';
 
 interface IWalletBarProps {
   open?: boolean;
@@ -34,18 +38,7 @@ const WalletBar = ({open, handleDrawerOpen}: IWalletBarProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const dispatch = useAppDispatch();
 
-  const handleSelectCredential = (jwt: string) => {
-    dispatch(selectedCredential(jwt));
-  };
-  const openMenu = Boolean(anchorEl);
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const license = useAppSelector(selectSingleCredential);
 
   const onSelectLicense = (vc: CredentialStoredType) => {
     setActorName(createActorName(vc)); // Update actor name with selected VC details
@@ -92,11 +85,15 @@ const WalletBar = ({open, handleDrawerOpen}: IWalletBarProps) => {
   };
 
   useEffect(() => {
-    if (storedCredentials && storedCredentials.length > 0) updateActorName();
+    if (license) {
+      setActorName(createActorName(license));
+    } else if (storedCredentials && storedCredentials.length > 0) {
+      updateActorName();
+    }
   }, []);
 
   useEffect(() => {
-    if (appStoredCredentials && appStoredCredentials !== null) {
+    if (!license && appStoredCredentials && appStoredCredentials !== null) {
       if (storedCredentials && storedCredentials.length > 0) {
         updateActorName();
       } else {
@@ -104,6 +101,19 @@ const WalletBar = ({open, handleDrawerOpen}: IWalletBarProps) => {
       }
     }
   }, [appStoredCredentials]);
+
+  const handleSelectCredential = (jwt: string) => {
+    dispatch(selectedCredential(jwt));
+  };
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   return (
     <MuiAppBar

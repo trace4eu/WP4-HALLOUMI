@@ -1,4 +1,4 @@
-type EventType =
+export type EventType =
   | 'milk_loaded_to_track'
   | 'mint_loaded_to_track'
   | 'milk_delivered'
@@ -34,16 +34,18 @@ type descriptorMap = {
   };
 };
 
+export type PresentationSubmissionType = {
+  id: string;
+  definition_id: 'pdopresentation';
+  descriptor_map: descriptorMap[];
+};
+
 export type initBanchType = {
   productName: string;
   batchId: string;
   requiredActions: RequiredAction[];
   vp_token: string;
-  presentation_submission: {
-    id: string;
-    definition_id: 'pdopresentation';
-    descriptor_map: descriptorMap[];
-  };
+  presentation_submission: PresentationSubmissionType;
 };
 
 export type requiredActionType = {
@@ -51,4 +53,9 @@ export type requiredActionType = {
   from: string; //"did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9Kbo6sHBC12QRrparA2rA4St1GNgTLNx3vBy4obWPyjG38y5Jmr1ajefRG9vw5Wj7UVPKyYAUsVXmdAeANVa8eUqbaJmixVjwESjoPVPe7FcetwD1Fs9VVCF8CnyfG3gWr3LG",
   fromName: string; //"HLM tracks Ltd",
   notesToActor: string; //"deliver 80 kilos of cow milk from Alabra"
+};
+
+export type initBatchResponseType = {
+  success: boolean;
+  errors?: string[];
 };
