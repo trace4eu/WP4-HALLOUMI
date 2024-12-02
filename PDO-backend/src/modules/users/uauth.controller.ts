@@ -118,19 +118,19 @@ export class UserAuthController {
       verified:true,
     })
 
-    const vertoken=await this.userService.createVerToken({
-      userid: newuser._id,
-      vertoken: crypto.randomBytes(32).toString("hex"),
-    })
+    // const vertoken=await this.userService.createVerToken({
+    //   userid: newuser._id,
+    //   vertoken: crypto.randomBytes(32).toString("hex"),
+    // })
 
-    console.log('verlink->'+newuser._id+' '+vertoken.vertoken);
-    // const url = `${process.env.BASE_URL}users/${user.id}/verify/${token.token}`;
-    const url=`${process.env['PORTAL_URL']}/verlink?id=${newuser._id}&vertoken=${vertoken.vertoken}`
-		await sendEmail(newuser.email, "Verify Email", url);
-    return {
-      'message': 'A verification link was sent to your email account. it will expire in 5 mins',
-      'verurl': `portalurl/vertoken?id=${newuser._id}&vertoken=${vertoken.vertoken}`
-    }
+    // console.log('verlink->'+newuser._id+' '+vertoken.vertoken);
+    // // const url = `${process.env.BASE_URL}users/${user.id}/verify/${token.token}`;
+    // const url=`${process.env['PORTAL_URL']}/verlink?id=${newuser._id}&vertoken=${vertoken.vertoken}`
+		// await sendEmail(newuser.email, "Verify Email", url);
+    // return {
+    //   'message': 'A verification link was sent to your email account. it will expire in 5 mins',
+    //   'verurl': `portalurl/vertoken?id=${newuser._id}&vertoken=${vertoken.vertoken}`
+    // }
 
   }
 

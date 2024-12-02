@@ -8,7 +8,7 @@ import WalletModel from '../../models/WalletModel';
 import codeChallenge, {codeVerifier} from '../../helpers/codeChallenge';
 import type {CredentialOffer, CredentialOfferPayload} from '../../screens/CredentialOffer';
 import {IGetVCReqOptions} from '../credentialSlice';
-import {typeIssuer} from '../../screens/Issuers';
+//import {typeIssuer} from '../../screens/Issuers';
 import {
   CredentialIssuerMetadata,
   CredentialResponse,
@@ -19,9 +19,16 @@ import {
 import {VCtype} from '../../screens/Wallet';
 import {initBanchType, initBatchResponseType, ReqEventsRespType} from '../../types/newBatchTypes';
 import {Actor} from '../../components/BatchComponent';
-import {EventDetailsType, pendingTaskType} from '../../types/pendingTaskType';
+import {
+  CompletedTaskDocumentType,
+  CompletedTaskType,
+  DocumentResponseType,
+  EventDetailsType,
+  PendingTaskType,
+} from '../../types/taskType';
 import {presentationSubmission} from '../../helpers/presentationSubmission';
 import getVerifiablePresentationJwt from '../../helpers/getVerifiablePresentationJwt';
+import {CompletedBatchType} from '../../types/completedBatchType';
 
 axios.defaults.timeout = 25000;
 const abortTimeout = 25000;
@@ -652,32 +659,32 @@ export default class ApiService {
     return statusResp?.data.status;
   }
 
-  async getIssuers(type: string) {
-    const getIssuersOptions = {
-      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/verifier/known_issuers`,
-      method: 'GET',
-      signal: AbortSignal.timeout(abortTimeout),
-    };
+  // async getIssuers(type: string) {
+  //   const getIssuersOptions = {
+  //     url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/verifier/known_issuers`,
+  //     method: 'GET',
+  //     signal: AbortSignal.timeout(abortTimeout),
+  //   };
 
-    let getIssuersResponse;
+  //   let getIssuersResponse;
 
-    try {
-      getIssuersResponse = await axios(getIssuersOptions);
-      if (getIssuersResponse?.data['error']) {
-        console.error('Axios error: ', getIssuersResponse.data['error_description']);
-        throw new Error(getIssuersResponse.data['error_description'] as string);
-      }
-    } catch (e) {
-      console.error('Get known issuers API request error: ', e);
-      return e;
-    }
+  //   try {
+  //     getIssuersResponse = await axios(getIssuersOptions);
+  //     if (getIssuersResponse?.data['error']) {
+  //       console.error('Axios error: ', getIssuersResponse.data['error_description']);
+  //       throw new Error(getIssuersResponse.data['error_description'] as string);
+  //     }
+  //   } catch (e) {
+  //     console.error('Get known issuers API request error: ', e);
+  //     return e;
+  //   }
 
-    const typedIssuers = getIssuersResponse?.data.filter(
-      (issuer: typeIssuer) => issuer['supported_vc_type'] === type
-    );
+  //   const typedIssuers = getIssuersResponse?.data.filter(
+  //     (issuer: typeIssuer) => issuer['supported_vc_type'] === type
+  //   );
 
-    return typedIssuers;
-  }
+  //   return typedIssuers;
+  // }
 
   async getLicenseVC(pinCode: string) {
     const did = this.walletinstance.getDID();
@@ -932,7 +939,7 @@ export default class ApiService {
     };
 
     const getRequiredEventsResponse = await this.request(config);
-    return getRequiredEventsResponse.data as pendingTaskType[];
+    return getRequiredEventsResponse.data as PendingTaskType[];
   }
 
   async updateBatch(documentId: string, eventDetails: EventDetailsType, jwtvc: string) {
@@ -963,5 +970,60 @@ export default class ApiService {
     console.log('updateBatchResponse: ', updateBatchResponse);
 
     return updateBatchResponse.data as initBatchResponseType;
+  }
+
+  //GET /completedTasks?productName&actordid=myDID&allowedEvent=event
+  async getCompletedTasks(productName: string, actordid: string, allowedEvent: string) {
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/completedTasks`,
+      params: {productName, actordid, allowedEvent},
+    };
+
+    const getcompletedTasksResponse = await this.request(config);
+    return getcompletedTasksResponse.data as CompletedTaskType[];
+  }
+
+  // GET /document?documentId=id&fromCustomer=false
+  async getTaskDocument(documentId: string, fromCustomer = false) {
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/document`,
+      params: {documentId, fromCustomer},
+    };
+
+    const getTaskDocResponse = await this.request(config);
+    console.log('API getTaskDocResponse', getTaskDocResponse);
+
+    return getTaskDocResponse.data as DocumentResponseType | CompletedTaskDocumentType;
+  }
+
+  //GET /completedBatches?productName=name&actorDid=mydid&allowedEvent=event
+  async getCompletedBatches(productName: string, actordid: string, allowedEvent: string) {
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/completedBatches`,
+      params: {productName, actordid, allowedEvent},
+    };
+
+    const getCompletedBatchesResponse = await this.request(config);
+    console.log('API getCompletedBatchesResponse', getCompletedBatchesResponse);
+
+    return getCompletedBatchesResponse.data as CompletedBatchType[];
+  }
+
+  //TODO  for draft here only
+  // GET /document?documentId=id&fromCustomer=true
+  async getShowTaskPage(documentId: string, fromCustomer = true) {
+    const config: AxiosRequestConfig = {
+      method: 'GET',
+      url: `${process.env.REACT_APP_PDO_BACKEND_URL}/v3/tnt/document`,
+      params: {documentId, fromCustomer},
+    };
+
+    const gethtmlContentResponse = await this.request(config);
+    console.log('API gethtmlContentResponse ', gethtmlContentResponse);
+
+    return gethtmlContentResponse.data; //.text();??
   }
 }

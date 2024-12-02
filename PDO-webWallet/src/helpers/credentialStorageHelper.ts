@@ -7,12 +7,13 @@ class CredentialStorageHelper {
   storeVC(storeFormatVC: CredentialStoredType, walletModel: WalletModel) {
     const verifiedCredentialsFromLocalStorage = walletModel?.getStoredCredentials();
     const storedVCs: CredentialStoredType[] =
-      verifiedCredentialsFromLocalStorage && verifiedCredentialsFromLocalStorage.length
+      (verifiedCredentialsFromLocalStorage && verifiedCredentialsFromLocalStorage.length > 0)
         ? verifiedCredentialsFromLocalStorage
         : [];
 
     // 'credential' in verifiedCredential && storedVCs.push(storeFormatVC);
     storedVCs.push(storeFormatVC);
+    console.log('after adding new credential->'+storedVCs);
     walletModel?.storeVerifiedCredentials(JSON.stringify(storedVCs));
   }
 
@@ -20,7 +21,7 @@ class CredentialStorageHelper {
   // with the same productName and allowedEvent as the new vc
 
   updateVC(newVC: CredentialStoredType, walletModel: WalletModel) {
-    const storedCredentials = walletModel?.getStoredCredentials() as CredentialStoredType[];
+    const storedCredentials = walletModel?.getStoredCredentials() as CredentialStoredType[] || [];
     const updatedCredentials = storedCredentials.map((vc) => {
       const details = vc.vcDetails as issuanceCertificateCardDetails;
       if (

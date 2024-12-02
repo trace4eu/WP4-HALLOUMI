@@ -64,11 +64,12 @@ const App = ({walletModel}: PropsApp) => {
     if (isLoggedIn) {
       const storedCredentials = walletModel.getStoredCredentials() as CredentialStoredType[];
       console.log('all VCs at log in', storedCredentials);
-      if (storedCredentials && storedCredentials.length !== 0)
+      if (storedCredentials && storedCredentials.length !== 0) {
         dispatch(credentialsAddAll(storedCredentials));
-      const existingVC: CredentialStoredType = walletModel.getStoredCredentials()[0];
+        const existingVC: CredentialStoredType = walletModel.getStoredCredentials()[0];
 
-      dispatch(selectedCredential(existingVC.jwt));
+        dispatch(selectedCredential(existingVC.jwt));
+      }
     }
   }, [isLoggedIn]);
 
@@ -120,7 +121,7 @@ const App = ({walletModel}: PropsApp) => {
                 path="/completedtasks"
                 element={<CompletedTasks walletModel={walletModel} />}
               />
-              <Route path="/newqrcode" element={<NewQRcode walletModel={walletModel} />} />
+              <Route path="/newqrcode" element={<NewQRcode />} />
               {/* <Route path="/cards/:id" element={<Card walletModel={walletModel} />} /> */}
               {/* <Route path="/reset" element={<Reset walletModel={walletModel} />} /> */}
               <Route path="/cookie" element={<CookiePolicy />} />

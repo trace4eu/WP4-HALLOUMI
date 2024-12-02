@@ -14,6 +14,7 @@ import BatchComponent from '../components/BatchComponent';
 import ErrorDownloadAlert from '../components/ErrorDownloadAlert';
 import {CircularProgress} from '@mui/material';
 import {CredentialStoredType} from '../types/typeCredential';
+import { Bolt } from '@mui/icons-material';
 
 interface PropsNewBatch {
   walletModel: WalletModel;
@@ -28,12 +29,14 @@ const NewBatch = ({walletModel}: PropsNewBatch) => {
   const license = useAppSelector(selectSingleCredential);
   useEffect(() => {
     if (!license) {
-      walletModel.getStoredCredentials() && walletModel.getStoredCredentials().length > 0;
+
+      if (walletModel.getStoredCredentials() && walletModel.getStoredCredentials().length > 0) {
       const existingVC: CredentialStoredType = walletModel.getStoredCredentials()[0];
 
       if (existingVC) {
         dispatch(selectedCredential(existingVC.jwt));
       }
+    }
     }
   }, []);
 
@@ -75,7 +78,7 @@ const NewBatch = ({walletModel}: PropsNewBatch) => {
   }, [license, license?.vcDetails.lastInChain]);
 
   const lastInChainWarning = !license?.vcDetails.lastInChain ? (
-    <Typography sx={{textAlign: 'center'}}>
+    <Typography sx={{textAlign: 'center', color: 'red'}}>
       Only last in chain actors can create a new batch.
     </Typography>
   ) : null;
@@ -105,27 +108,34 @@ const NewBatch = ({walletModel}: PropsNewBatch) => {
       <Box sx={{px: 6}}>
         <Typography
           sx={{textAlign: 'center'}}
-          variant="h3"
-          className="govcy-h3"
+          variant="h2"
+          className="govcy-h2"
           fontWeight="fontWeightBold"
         >
-          Create a supply chain traceability document for a new batch
+          New Batch
         </Typography>
+        <Typography
+          sx={{textAlign: 'center'}}
+       
+        >
+          create a supply chain traceability document (TnT) for a new batch
+        </Typography>
+
         <Box>{lastInChainWarning}</Box>
         {events && license && !lastInChainWarning && (
-          <Box>
-            <Typography gutterBottom>Events Required to Complete the Batch Production:</Typography>
+          <Box sx={{marginTop: '20px'}}>
+            <Typography gutterBottom>Events Required to Complete the Batch Production for {license.vcDetails.productName}:</Typography>
             <List>
               {events.map((event, index) => (
                 <ListItem key={index}>
-                  <ListItemText primary={`${event}`} />
+                  <ListItemText primaryTypographyProps={{ fontStyle: 'italic', fontWeight: 'bold' }}primary={`${event}`} />
                 </ListItem>
               ))}
             </List>
-            <Typography>
-              Type the new batch id and select the supply actors to take part in the new batch.
-              <span style={{fontWeight: 500}}>
-                You must select one for each required event above.
+            <Typography sx={{marginBottom: '15px'}}>
+              Type the new batch id and select the supply chain actors to take part in the new batch.
+              <span style={{color: '#cc3300'}}>
+                You must select an actor for each required event above.
               </span>
             </Typography>
             <BatchComponent

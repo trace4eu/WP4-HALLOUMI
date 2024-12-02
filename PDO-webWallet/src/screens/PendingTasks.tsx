@@ -6,7 +6,7 @@ import Container from '@mui/material/Container';
 import {useAppSelector} from '../features/hooks';
 import {selectSingleCredential} from '../features/credentialSlice';
 import {apiService} from '../index';
-import {EventDetailsOptionType, EventDetailsType, pendingTaskType} from '../types/pendingTaskType';
+import {EventDetailsOptionType, EventDetailsType, PendingTaskType} from '../types/taskType';
 import CircularProgress from '@mui/material/CircularProgress';
 import ErrorDownloadAlert from '../components/ErrorDownloadAlert';
 import TaskSelectionComponent from '../components/TaskSelectionComponent';
@@ -25,8 +25,8 @@ const SUCCESS_UPDATE_MSG = 'Batch updated succesfully';
 const PendingTasks = ({walletModel}: PropsPendingTasks) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [tasks, setTasks] = useState<pendingTaskType[] | null>(null);
-  const [selectedTask, setSelectedTask] = useState<pendingTaskType | null>(null);
+  const [tasks, setTasks] = useState<PendingTaskType[] | null>(null);
+  const [selectedTask, setSelectedTask] = useState<PendingTaskType | null>(null);
   const [isEventDetails, setIsEventDetails] = useState(false);
   const [eventDetails, setEventDetails] = useState<EventDetailsType | null>(null);
   const [isBatchUpdated, setIsBatchUpdated] = useState(false);
@@ -206,8 +206,14 @@ const PendingTasks = ({walletModel}: PropsPendingTasks) => {
         </Typography>
       </Box>
 
-      {tasks && (
-        <TaskSelectionComponent
+      {!tasks || tasks.length === 0 ? (
+        <Typography marginTop={2} textAlign="center">
+          {' '}
+          No pending tasks yet
+        </Typography>
+      ) :
+       (
+        <TaskSelectionComponent<PendingTaskType>
           tasks={tasks}
           selectedTask={selectedTask}
           setSelectedTask={setSelectedTask}

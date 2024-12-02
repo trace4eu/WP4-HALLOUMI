@@ -30,7 +30,7 @@ export const useAutoLogout = (
         window.removeEventListener(item, resetTimer);
       });
       setIsLoggedIn(false);
-    }, 120000); //  2 min
+    }, 1200000); //  2 min
   };
 };
 

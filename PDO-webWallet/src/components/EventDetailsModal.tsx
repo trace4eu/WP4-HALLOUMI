@@ -5,7 +5,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import {EventDetailsOptionType, EventDetailsType} from '../types/pendingTaskType';
+import {EventDetailsType} from '../types/taskType';
 
 interface EventDetailsModalProps {
   isOpen: boolean;

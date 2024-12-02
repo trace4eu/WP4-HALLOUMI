@@ -25,7 +25,7 @@ export default function ErrorDownloadAlert({message, isErrorWindow, onClose}: IP
   return (
     <Snackbar
       open={isErrorWindow}
-      autoHideDuration={3000}
+      autoHideDuration={4000}
       onClose={onClose}
       anchorOrigin={{
         vertical: 'top',

@@ -37,7 +37,7 @@ const Login = ({walletModel, setWalletOpen}: PropsLogin) => {
       setWalletOpen(true);
       setPassword('');
       if (!state) {
-        navigate('/PendingTasks');
+        navigate('/mylicensevc');
       } else {
         navigate(state?.previousPath);
       }
@@ -67,7 +67,7 @@ const Login = ({walletModel, setWalletOpen}: PropsLogin) => {
         }}
       >
         <Typography variant="h2" className="govcy-h2">
-          Open Wallet
+          Open PDO Wallet
         </Typography>
         <Typography>The wallet will be loaded from your browser's local storage.</Typography>
         <Stack
@@ -102,7 +102,7 @@ const Login = ({walletModel, setWalletOpen}: PropsLogin) => {
           onClick={handleLogin}
           className="govcy-btn-primary"
         >
-          Open wallet
+          Open PDO wallet
         </Button>
       </Box>
     </>

@@ -59,7 +59,7 @@ const SelfSovereignIdentity = ({walletModel}: ISelfSovereignIdProps) => {
         justifyContent: 'flex-start',
         alignItems: 'center',
         height: '100%',
-        marginTop: '-70px',
+        marginTop: '-20px',
       }}
     >
       <Typography variant="h2" className="govcy-h2" gutterBottom>

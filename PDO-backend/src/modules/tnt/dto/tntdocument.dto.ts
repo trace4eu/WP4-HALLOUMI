@@ -16,4 +16,15 @@ export class TnTdocumentDto {
 
 }
 
+export class TnTEventsDto {
+
+ 
+  @IsString()
+  documentId!: string;
+
+ 
+
+}
+
+
 export default TnTdocumentDto;

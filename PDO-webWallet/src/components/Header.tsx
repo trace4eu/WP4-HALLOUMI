@@ -4,8 +4,8 @@ import WalletBar from './WalletBar';
 
 const Header = ({isWalletBar = true}: {isWalletBar?: boolean}) => {
   return (
-    <AppBar position="static" className="govcy-header" sx={{width: '100vw'}}>
-      <Toolbar className="govcy-header-main-area" style={{height: '75px'}}>
+    <AppBar position="static" className="govcy-header-top-area" sx={{width: '100vw'}}>
+      <Toolbar className="govcy-header-main-area" style={{height: '65px'}}>
         <Container className="govcy-main-area-items">
           <Link
             href="/"

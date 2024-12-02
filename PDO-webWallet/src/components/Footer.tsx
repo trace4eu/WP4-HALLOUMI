@@ -44,8 +44,8 @@ const Footer = () => {
               </li>
             </ul>
             <div className="govcy-d-flex govcy-align-items-center govcy-flex-wrap">
-              <span className="govcy-fs-2 govcy-fw-bold govcy-mr-6">gov.cy</span>
-              <span className="govcy-mr-6 govcy-mt-2">&copy; Republic of Cyprus, 2024</span>
+              <span className="govcy-fs-2 govcy-fw-bold govcy-mr-6">gov.cx</span>
+              <span className="govcy-mr-6 govcy-mt-2">&copy; Ministry of Agriculture, 2024</span>
               {/* <a href="https://europa.eu/" title="Go to EU Website" target="_blank"><img className="govcy-eu-logo" src="/assets/images/eu_cofounded_en.png" alt="Co-funded by the European Union"></a> */}
             </div>
           </div>

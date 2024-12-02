@@ -11,7 +11,7 @@ interface IDecentralizedIDKeyProps {
   setOnRevealKeyOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const TIMER_SEC = 20;
+const TIMER_SEC = 10;
 
 const DecentralizedIDKey = ({didPrivateKey, setOnRevealKeyOpen}: IDecentralizedIDKeyProps) => {
   const [alertOpen, setAlertOpen] = useState(false);

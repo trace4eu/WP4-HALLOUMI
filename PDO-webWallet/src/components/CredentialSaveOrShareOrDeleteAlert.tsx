@@ -16,7 +16,7 @@ const CredentialSaveOrShareOrDeleteAlert = ({
   return (
     <Snackbar
       open={isVC}
-      autoHideDuration={3000}
+      autoHideDuration={4000}
       onClose={toCancel}
       anchorOrigin={{
         vertical: 'top',

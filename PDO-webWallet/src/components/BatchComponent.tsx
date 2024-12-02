@@ -272,7 +272,7 @@ const BatchComponent = ({
                       />
                     </TableCell>
                     <TableCell>{actor.legalName}</TableCell>
-                    <TableCell>{actor.allowedEvent}</TableCell>
+                    <TableCell sx={{fontStyle: 'italic'}}>{actor.allowedEvent}</TableCell>
                     <TableCell>
                       <TextField
                         placeholder="Enter notes"

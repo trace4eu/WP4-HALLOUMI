@@ -119,7 +119,9 @@ import Client from "./utils/Client.js";
 import crypto from "node:crypto";
 import UpdateBatchDto from "./dto/updatebatch.dto.js";
 import TnTqueryDto from "./dto/tntquery.dto.js";
-import TnTdocumentDto from "./dto/tntdocument.dto.js";
+import TnTdocumentDto, { TnTEventsDto } from "./dto/tntdocument.dto.js";
+import { template } from "../../public/customer.js";
+import Mustache from 'mustache'
 
 type EbsiVerifiableAttestations = EbsiVerifiableAttestation20221101 | EbsiVerifiableAttestation202401;
 
@@ -954,7 +956,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
      from: wallet.address,
      eventParams: {
      documentHash:documentId,
-     externalHash: "0x29214",
+     externalHash: `event ${allowedEvent} added`,
      sender:`0x${Buffer.from(this.issuerDid).toString("hex")}`,
      origin:"my origin",
      metadata:eventMetadata
@@ -1044,6 +1046,40 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
   }
 
+  async getEventsCustomer(hash:string, events: string[]) {
+
+    const docUrl = 'https://api-pilot.ebsi.eu/track-and-trace/v1/documents'
+
+    let pdoEvents: PDOEvent[] = [] ;
+    let success:boolean = true;
+
+    await Promise.all(
+      events.map(async event => {
+
+        try {
+          const response = await axios.get(
+            `${docUrl}/${hash}/events/${event}`,
+            
+          )
+          console.log('event->'+response.data);
+          const tntEvent = response.data ;
+          //const pdoEvent = JSON.parse(tntEvent.metadata) as PDOEvent;
+          //pdoEvent.createdAt = tntEvent.timestamp.datetime;
+          pdoEvents.push(tntEvent)
+          
+      
+          } catch (error) {
+           // console.log('getdocument error->'+error);
+            success = false;
+          // return {pdoEvents: []}
+          } 
+        
+      })
+   )
+
+    return {pdoEvents, success}
+
+  }
   getDocHash(productName:string,batchId:string):string {
 
     const padding= '123456789012345';
@@ -1068,6 +1104,14 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
     const {productName, actordid, allowedEvent} = tntQuery;
 
+      //both or none of actordid and allowedEVent must be specified
+    
+      if ((actordid && !allowedEvent) || (!actordid && allowedEvent) ) {
+        console.log('both or none actordid and allowedevent needed')
+        return []
+      }
+  
+
     const accessesUrl = `https://api-pilot.ebsi.eu/track-and-trace/v1/accesses?subject=${this.issuerDid}&page[size]=10`
 
     const previous: BatchAll[] = [];
@@ -1075,7 +1119,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
     const results= await this.batchAll(productName,accessesUrl,previous) as BatchAll[];
 
 
-
+  
      if (actordid && allowedEvent) {
       console.log("PendingTasks")
       //get pending tasks for actor in pending batches
@@ -1158,6 +1202,14 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
     const {productName, actordid, allowedEvent} = tntQuery;
 
+    
+      //both or none of actordid and allowedEVent must be specified
+    
+      if ((actordid && !allowedEvent) || (!actordid && allowedEvent) ) {
+        console.log('both or none actordid and allowedevent needed')
+        return []
+      }
+
     const accessesUrl = `https://api-pilot.ebsi.eu/track-and-trace/v1/accesses?subject=${this.issuerDid}&page[size]=10`
 
     const previous: BatchAll[] = [];
@@ -1175,7 +1227,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
       results.map( batch => {
 
         const {pdoEvents} = batch;
-          if (pdoEvents.some(pdoEvent => pdoEvent.lastInChain && pdoEvent.from == actordid && pdoEvent.type == allowedEvent)) {
+        if (pdoEvents.some(pdoEvent => pdoEvent.lastInChain && pdoEvent.from == actordid && pdoEvent.type == allowedEvent)) {
             
              {
             
@@ -1251,7 +1303,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
      results.map( batch => {
 
-       const {pdoEvents} = batch;
+          const {pdoEvents} = batch;
          
            const completed = pdoEvents.some(event => (event.lastInChain));
            pdoEvents.map(pdoEvent2 => {
@@ -1282,7 +1334,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
   }
 
     
-  async document(tntQuery: TnTdocumentDto): Promise<object> {
+  async document(tntQuery: TnTdocumentDto): Promise<object|string> {
 
     const {documentId, fromCustomer} = tntQuery;
     const {pdodocument,requiredEvents, events, createdAt} = await this.getDocument(documentId);
@@ -1357,7 +1409,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
       type EventWithStatus =   Partial<PDOEvent> & {licenseStatus:string};
       const completedEventsWithStatus: EventWithStatus[] = [];
-      //validate vcs is pdoEvents and add status property
+      //validate vcs in pdoEvents and add status property
       
       await Promise.all(
         pdoEvents.map(async event => {
@@ -1369,16 +1421,50 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
         }));
       //return a formatted html page
 
-      return {
-        documentId,
-        createdAt,
-        batchId: pdodocument.batchId,
-        createdOnBehalfOfName: pdodocument.createdOnBehalfOfName,
-        batchCompleted,
-        completedEventsWithStatus
+      type Data = {
+        documentId: string;
+        batchId:string;
+        halloumiProduced: EventWithStatus;
+        milkProduced: EventWithStatus;
+        mintProduced: EventWithStatus;
+        milkTransported: EventWithStatus;
+        mintTransported: EventWithStatus;
       }
 
+      let templateData:Data = {documentId,batchId:pdodocument.batchId,
+        halloumiProduced:{licenseStatus:'n/a'},
+        milkProduced:{licenseStatus:'n/a'},
+        mintProduced:{licenseStatus:'n/a'},
+        milkTransported:{licenseStatus:'n/a'},
+        mintTransported:{licenseStatus:'n/a'},
+      };
+      const halloumiProduced = completedEventsWithStatus.filter(event => (event.type == 'halloumi_produced'))[0]
+      const milkProduced = completedEventsWithStatus.filter(event => (event.type == 'milk_loaded_to_track'))[0]
+      const mintProduced = completedEventsWithStatus.filter(event => (event.type == 'mint_loaded_to_track'))[0]
+      const milkTransported = completedEventsWithStatus.filter(event => (event.type == 'milk_delivered'))[0]
+      const mintTransported = completedEventsWithStatus.filter(event => (event.type == 'mint_delivered'))[0]
+      console.log('milkProduced->'+JSON.stringify(milkProduced));
+      templateData.halloumiProduced= halloumiProduced ? halloumiProduced : {licenseStatus:'n/a'}
+      templateData.milkProduced= milkProduced ? milkProduced : {licenseStatus:'n/a'}
+      templateData.mintProduced= mintProduced ? mintProduced : {licenseStatus:'n/a'}
+      templateData.milkTransported= milkTransported ? milkTransported : {licenseStatus:'n/a'}
+      templateData.mintTransported= mintTransported ? mintTransported : {licenseStatus:'n/a'}
 
+     
+      // return {
+      //   documentId,
+      //   createdAt,
+      //   batchId: pdodocument.batchId,
+      //   createdOnBehalfOfName: pdodocument.createdOnBehalfOfName,
+      //   batchCompleted,
+      //   completedEventsWithStatus
+      // }
+
+
+      const output = Mustache.render(template,templateData)
+      return output;
+
+     
     }
 
     return    {
@@ -1388,8 +1474,26 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
   }
 
-  
+   
+  async events(tntQuery: TnTEventsDto): Promise<object> {
+
+    const {documentId} = tntQuery;
+    const {pdodocument,requiredEvents, events, createdAt} = await this.getDocument(documentId);
+   
+
+   
+    if (!pdodocument) 
+      return {
+          success:false,
+          errors:['error getting tnt document']
+      }
+
     
+
+    const {pdoEvents,success} = await this.getEventsCustomer(documentId,events);
+    return pdoEvents
+
+  }
 
   
     async batchAll(productName: string, url: string, prevresults: BatchAll[] ): Promise<object> {
@@ -2134,7 +2238,7 @@ sha256(data: string) {
 
     const {  vcJwt } = await issueCredential(
       this.issuerDid,
-      "Ministry Of Argiculture",
+      "Ministry Of Agriculture",
       this.issuerKid,
       keyPair.privateKeyJwk,
       this.issuerAccreditationUrl,

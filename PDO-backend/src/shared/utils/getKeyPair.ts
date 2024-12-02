@@ -2,6 +2,7 @@ import elliptic from "elliptic";
 import { base64url, calculateJwkThumbprint } from "jose";
 import { base64url as base64url2 } from "multiformats/bases/base64";
 import type { JWK } from "jose";
+import { removePrefix0x } from "../../modules/tnt/utils/utils.js";
 
 export type JWKWithKid = JWK & { kid: string };
 
@@ -32,7 +33,7 @@ export async function getKeyPair(
     }
 
     // Get key pair from hex private key
-    const keyPair = ec.keyFromPrivate(privateKey, "hex");
+    const keyPair = ec.keyFromPrivate(removePrefix0x(privateKey), "hex");
 
     // Validate key pair
     const validation = keyPair.validate();
@@ -50,7 +51,7 @@ export async function getKeyPair(
       y: base64url.encode(pubPoint.getY().toBuffer("be", 32)),
     };
 
-    d = base64url.encode(Buffer.from(privateKey, "hex"));
+    d = base64url.encode(Buffer.from(removePrefix0x(privateKey), "hex"));
   } else {
     const { d: privateExponent, ...pubKeyJwk } = privateKey;
     d = privateExponent as string;

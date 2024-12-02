@@ -26,7 +26,7 @@ const config = {
     // static: path.join(__dirname, 'dist'),
     // compress: true,
     hot:true,
-    port: 8001,
+    port: 443,
     allowedHosts: 'all',
     https:true,
     https: {
@@ -92,6 +92,7 @@ const config = {
     extensions: ['.tsx', '.ts', '.jsx', '.js', '...'],
     fallback: {
       // Here paste
+      process:false,
       crypto: require.resolve('crypto-browserify'),
       stream: require.resolve('stream-browserify'),
     },

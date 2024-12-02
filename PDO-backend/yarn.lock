@@ -2802,6 +2802,11 @@
   resolved "https://registry.npmjs.org/@types/minimist/-/minimist-1.2.2.tgz"
   integrity sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==
 
+"@types/mustache@^4.2.5":
+  version "4.2.5"
+  resolved "https://registry.npmjs.org/@types/mustache/-/mustache-4.2.5.tgz"
+  integrity sha512-PLwiVvTBg59tGFL/8VpcGvqOu3L4OuveNvPi0EYbWchRdEVP++yRUXJPFl+CApKEq13017/4Nf7aQ5lTtHUNsA==
+
 "@types/node@*", "@types/node@^20.11.5", "@types/node@>=10.0.0":
   version "20.11.5"
   resolved "https://registry.npmjs.org/@types/node/-/node-20.11.5.tgz"
@@ -8291,6 +8296,11 @@ multihashes@^4.0.3:
     multibase "^4.0.1"
     uint8arrays "^3.0.0"
     varint "^5.0.2"
+
+mustache@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.npmjs.org/mustache/-/mustache-4.2.0.tgz"
+  integrity sha512-71ippSywq5Yb7/tVYyGbkBggbU8H3u5Rz56fH60jGFgr8uHwxs+aSKeqmluIVzM0m0kB7xQjKS6qPfd0b2ZoqQ==
 
 mute-stream@~1.0.0:
   version "1.0.0"

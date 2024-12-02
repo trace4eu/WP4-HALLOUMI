@@ -44,7 +44,7 @@ const Layout = () => {
       <Box sx={{display: 'flex', flex: 1}} width="100vw">
         <MenuSlider open={open} setOpen={setOpen} />
 
-        <Main open={open} style={{width: '100vw'}}>
+        <Main open={open} style={{width: '100vw', 'marginTop': '15px'}}>
           {/* <DrawerHeader /> */}
           <Outlet />
         </Main>

@@ -15,7 +15,7 @@ export default function SuccessAlert({isOpen, onClose, alertText}: IPropsAlert) 
   return (
     <Snackbar
       open={isOpen}
-      autoHideDuration={3000}
+      autoHideDuration={4000}
       onClose={onClose}
       anchorOrigin={{
         vertical: 'top',

@@ -64,7 +64,7 @@ const Signup = ({walletModel, setIsLoggedIn}: PropsSignup) => {
         setPasswordConfo('');
         setIsLoggedIn(true);
 
-        navigate('/wallet');
+        navigate('/mylicensevc');
         // setIsNext(true);
       } catch (e: unknown) {
         const {message} = e as Error;

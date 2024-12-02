@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Query,
+  Res,
   Response,
 } from "@nestjs/common";
 
@@ -34,7 +35,10 @@ import NewBatchDto from "./dto/newbatch.dto.js";
 import UpdateBatchDto from "./dto/updatebatch.dto.js";
 import { ProductsDto } from "../admin/dto/paginate.dto.js";
 import TnTqueryDto from "./dto/tntquery.dto.js";
-import TnTdocumentDto from "./dto/tntdocument.dto.js";
+import TnTdocumentDto, { TnTEventsDto } from "./dto/tntdocument.dto.js";
+import GetImageDto from "./dto/getimage.dto.js";
+import fs from 'fs'
+import path from "path";
 
 @Controller("/tnt")
 export class TnTController {
@@ -168,14 +172,39 @@ export class TnTController {
    @Get("/document")
    @HttpCode(200)
    async document(
-     //@Req() req: Request,
+     @Response({ passthrough: true }) res:FastifyReply,
      @Query() params:TnTdocumentDto
+     ): Promise<object|string> {
+   
+     console.log('params->'+JSON.stringify(params));
+ 
+     
+     const result= await this.tntService.document(params);
+     if (params.fromCustomer =='true' && typeof result=='string') {
+        res.header('Content-Type','text/html');
+        
+        res.code(200).send(result);
+        
+     } 
+
+     return result
+   }
+
+   @Get("/events")
+   @HttpCode(200)
+   async events(
+     @Response({ passthrough: true }) res:FastifyReply,
+     @Query() params:TnTEventsDto
      ): Promise<object> {
    
      console.log('params->'+JSON.stringify(params));
  
-     return await this.tntService.document(params);
+     
+     const result= await this.tntService.events(params);
+     
+     return result
    }
+
 
   @HttpCode(201)
   @Post("/init_new_batch")
@@ -235,7 +264,19 @@ export class TnTController {
    }
  
 
-  
+   @Get("/image/:name")
+   @HttpCode(201)
+   async getImage(
+    @Response({ passthrough: true }) res:FastifyReply,
+     @Param() params: GetImageDto
+   ) {
+    res.header('Content-Type','application/octet-stream');
+        
+   // const data = fs.readFileSync(`D:\\trace4EU\\pdo-backend\\src\\public\\${params.name}`)
+    const data = fs.readFileSync(path.resolve( process.cwd(), `./src/public/${params.name}`))
+    console.log('data to send->'+data.length);
+    res.status(200).send(data);
+   }
 
  
 }
