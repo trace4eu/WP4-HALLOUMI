@@ -1,0 +1,927 @@
+{
+	"info": {
+		"_postman_id": "30eeae07-271f-490a-9c49-3cf557ee4c13",
+		"name": "pdo-backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "16995080",
+		"_collection_link": "https://speeding-meadow-717840.postman.co/workspace/TRACE4EU~a55c6245-664c-49fe-af4a-686f8ac2dd5c/collection/16995080-30eeae07-271f-490a-9c49-3cf557ee4c13?action=share&source=collection_link&creator=16995080"
+	},
+	"item": [
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "signup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "nickname",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "admin@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/uauth/sign-up",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"uauth",
+								"sign-up"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"pm.environment.set(\"token\", jsonData.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "admin@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/uauth/login",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"uauth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/uauth/logout?email=yiorgosc@gmail.com",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"uauth",
+								"logout"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "yiorgosc@gmail.com"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "changepwd",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "newpwd",
+									"value": "234567",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/admin/changepwd",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"admin",
+								"changepwd"
+							],
+							"query": [
+								{
+									"key": "newpwd",
+									"value": "234567",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "actors",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/admin/actors?productName=HALLOUMI&page=1&limit=5",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"admin",
+								"actors"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "newProduct",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productName\": \"HALLOUMI\",\r\n    \"requiredEvents\": [\r\n        \"milk_loaded_to_track\",\r\n        \"mint_loaded_to_track\",\r\n        \"milk_delivered\",\r\n        \"mint_delivered\",\r\n        \"halloumi_produced\"\r\n    ],\r\n    \"lastInChainEvent\": \"halloumi_produced\" \r\n    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/admin/newProduct",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"admin",
+								"newProduct"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "eventDetails",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productName\": \"HALLOUMI\",\r\n    \r\n    \"eventsDetails\": [\r\n       {\"type\":\"halloumi_produced\", \"details\": [\"production_date\",\"expiry_date\",\"milk_proportions\",\"total_items_produced\"]},\r\n       {\"type\":\"milk_loaded_to_track\", \"details\": [\"milk_production_date\",\"milk_type\",\"milk_volume\"]},\r\n        {\"type\":\"mint_loaded_to_track\", \"details\": [\"mint_production_date\",\"mint_volume\"]},\r\n       {\"type\":\"mint_delivered\", \"details\": [\"mint_delivery_date\",\"mint_weight\"]},\r\n       {\"type\":\"milk_delivered\", \"details\": [\"milk_delivery_date\",\"refrigerator_temperature\",\"milk_volume\"]}\r\n    ]\r\n    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/admin/eventDetails",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"admin",
+								"eventDetails"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "issue_vc",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/admin/issue_vc?productName=HALLOUMI&actorDID=did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbsY9JKd6HrBZ24fBC55MYBiRtkQggFfAFh9JyJghVLDKbc1yL3vvzcWKSDpQo6wukDfdj376eXsqVs3sx9jC4bGYFRJaAcLsziJwRYvrLkK6TVSCBSgXVz5j6e2HHXrnGeg&legalName=Halloumas Ltd&allowedEvent=milk_delivered",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"admin",
+								"issue_vc"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								},
+								{
+									"key": "actorDID",
+									"value": "did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbsY9JKd6HrBZ24fBC55MYBiRtkQggFfAFh9JyJghVLDKbc1yL3vvzcWKSDpQo6wukDfdj376eXsqVs3sx9jC4bGYFRJaAcLsziJwRYvrLkK6TVSCBSgXVz5j6e2HHXrnGeg"
+								},
+								{
+									"key": "legalName",
+									"value": "Halloumas Ltd"
+								},
+								{
+									"key": "allowedEvent",
+									"value": "milk_delivered"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "APIs available with an access token"
+		},
+		{
+			"name": "public",
+			"item": [
+				{
+					"name": "verifyVC",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \"jwtvc\": \"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRpZDplYnNpOnpvTDdtQkhIUW8yZ1dEVnoxWEpQZ1AzI1dpSS1GaUlOUTNkdW5naHhGM3QtYnRQd0pWTVRCREY5MVFhaHBPT3doZHMifQ.eyJqdGkiOiJ2YzpjeWVic2k6MjZhYTg1NGYtNzE4MC00YTRiLWIzMTYtMWZkMzMwOWE0YTQxIiwic3ViIjoiZGlkOmVic2k6emc0dzUxdWpWeGNWYm9rNTltZUFVaEsiLCJpc3MiOiJkaWQ6ZWJzaTp6b0w3bUJISFFvMmdXRFZ6MVhKUGdQMyIsIm5iZiI6MTczMDg3NzcxOCwiZXhwIjoxNzMwODc3OTU4LCJpYXQiOjE3MzA4Nzc3MTgsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sImlkIjoidmM6Y3llYnNpOjI2YWE4NTRmLTcxODAtNGE0Yi1iMzE2LTFmZDMzMDlhNGE0MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJWZXJpZmlhYmxlQXR0ZXN0YXRpb24iLCJWZXJpZmlhYmxlQXV0aG9yaXNhdGlvblRvT25ib2FyZCJdLCJpc3N1ZXIiOnsiaWQiOiJkaWQ6ZWJzaTp6b0w3bUJISFFvMmdXRFZ6MVhKUGdQMyIsImxlZ2FsTmFtZSI6IkNlbnRyYWwgQmFuayBPZiBDeXBydXMifSwiaXNzdWFuY2VEYXRlIjoiMjAyNC0xMS0wNlQwNzoyMTo1OFoiLCJpc3N1ZWQiOiIyMDI0LTExLTA2VDA3OjIxOjU4WiIsInZhbGlkRnJvbSI6IjIwMjQtMTEtMDZUMDc6MjE6NThaIiwiZXhwaXJhdGlvbkRhdGUiOiIyMDI0LTExLTA2VDA3OjI1OjU4WiIsImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiZGlkOmVic2k6emc0dzUxdWpWeGNWYm9rNTltZUFVaEsiLCJhY2NyZWRpdGVkRm9yIjpbXX0sImNyZWRlbnRpYWxTY2hlbWEiOnsiaWQiOiJodHRwczovL2FwaS1waWxvdC5lYnNpLmV1L3RydXN0ZWQtc2NoZW1hcy1yZWdpc3RyeS92My9zY2hlbWFzLzB4MjI2OTFmOWQxMTJmNDIxM2I3MTdhNmQ5NTRjMGZlNGE3ZDJkYmJiMTgzOWEzMWMyOWI0OGEzNWZkYTM2YjEzZiIsInR5cGUiOiJGdWxsSnNvblNjaGVtYVZhbGlkYXRvcjIwMjEifSwidGVybXNPZlVzZSI6eyJpZCI6Imh0dHBzOi8vYXBpLXBpbG90LmVic2kuZXUvdHJ1c3RlZC1pc3N1ZXJzLXJlZ2lzdHJ5L3Y1L2lzc3VlcnMvZGlkOmVic2k6em9MN21CSEhRbzJnV0RWejFYSlBnUDMvYXR0cmlidXRlcy8wYzljZThkMDVhMGU2YmZkMDQxYTA0NWFmYjZjZDRhZWU1ZTI0YWQ2MzEyM2E3OTY1NDBkOGI2NjFkN2Q4YjI2IiwidHlwZSI6Iklzc3VhbmNlQ2VydGlmaWNhdGUifX19.hJ0tXD14xxFOaR7MDhQqgI6RPz1ds5IaXnw3SvT6d3uP_KvsF92N30AyatD4neyqmZOeK4LHnCXhBQdLzxNQ-w\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/verifyVC",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"verifyVC"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "jwks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/jwks",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"jwks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_license",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/get_license_vc?walletDID=did:key:zBhBLmYmyihtomRdJJNEKzbPj51o4a3GYFeZoRHSABKUwqdjiQPY2g3mGSNj8hkg1897eBinpqHQNw9rVh69CvC95SkUnkND2TqP6RXr8vNjiESUmAwXY81BRB4LSZJ2Dg1Ud7PF8X5n8ZTbreoFdZkGvhi6AbboYgFzue9QCR8QSP27UmV5YxC",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"get_license_vc"
+							],
+							"query": [
+								{
+									"key": "walletDID",
+									"value": "did:key:zBhBLmYmyihtomRdJJNEKzbPj51o4a3GYFeZoRHSABKUwqdjiQPY2g3mGSNj8hkg1897eBinpqHQNw9rVh69CvC95SkUnkND2TqP6RXr8vNjiESUmAwXY81BRB4LSZJ2Dg1Ud7PF8X5n8ZTbreoFdZkGvhi6AbboYgFzue9QCR8QSP27UmV5YxC"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "products",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/products?productName=HALLOUMI",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"products"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "pendingBatches",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/pendingBatches?productName=HALLOUMI&actordid=did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9Kbo6sHBC12QRrparA2rA4St1GNgTLNx3vBy4obWPyjG38y5Jmr1ajefRG9vw5Wj7UVPKyYAUsVXmdAeANVa8eUqbaJmixVjwESjoPVPe7FcetwD1Fs9VVCF8CnyfG3gWr3LG&allowedEvent=milk_delivered",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"pendingBatches"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								},
+								{
+									"key": "actordid",
+									"value": "did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9Kbo6sHBC12QRrparA2rA4St1GNgTLNx3vBy4obWPyjG38y5Jmr1ajefRG9vw5Wj7UVPKyYAUsVXmdAeANVa8eUqbaJmixVjwESjoPVPe7FcetwD1Fs9VVCF8CnyfG3gWr3LG"
+								},
+								{
+									"key": "allowedEvent",
+									"value": "milk_delivered"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "completedBatches",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/completedBatches?productName=HALLOUMI",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"completedBatches"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								},
+								{
+									"key": "actordid",
+									"value": "did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbpybdA8UrgNm7BhUsZBpZRvG4MXL6v46b9hUmi4WCQjyWAEELqfnh6EKQ3fgeJ6Eab7W6V8uhiScQyGQK9Ru3v74GuPUmQq1ps6E7cpxAsLCws7k5ReCrosph6p234vMDLp",
+									"disabled": true
+								},
+								{
+									"key": "allowedEvent",
+									"value": "halloumi_produced",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "completedTasks",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/completedTasks?productName=HALLOUMI&actordid=did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbsY9JKd6HrBZ24fBC55MYBiRtkQggFfAFh9JyJghVLDKbc1yL3vvzcWKSDpQo6wukDfdj376eXsqVs3sx9jC4bGYFRJaAcLsziJwRYvrLkK6TVSCBSgXVz5j6e2HHXrnGeg&allowedEvent=halloumi_produced",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"completedTasks"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								},
+								{
+									"key": "actordid",
+									"value": "did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbsY9JKd6HrBZ24fBC55MYBiRtkQggFfAFh9JyJghVLDKbc1yL3vvzcWKSDpQo6wukDfdj376eXsqVs3sx9jC4bGYFRJaAcLsziJwRYvrLkK6TVSCBSgXVz5j6e2HHXrnGeg"
+								},
+								{
+									"key": "allowedEvent",
+									"value": "halloumi_produced"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "document",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/document?documentId=0x50444f2d48414c4c4f554d492d3331313032323032342d313233343536373839&fromCustomer=true",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"document"
+							],
+							"query": [
+								{
+									"key": "documentId",
+									"value": "0x50444f2d48414c4c4f554d492d3331313032323032342d313233343536373839"
+								},
+								{
+									"key": "fromCustomer",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "events",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/events?documentId=0x50444f2d48414c4c4f554d492d3331313032323032342d313233343536373839",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"events"
+							],
+							"query": [
+								{
+									"key": "documentId",
+									"value": "0x50444f2d48414c4c4f554d492d3331313032323032342d313233343536373839"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "image",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/image/halloumi.png",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"image",
+								"halloumi.png"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "active_actors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/active_actors?productName=HALLOUMI",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"active_actors"
+							],
+							"query": [
+								{
+									"key": "productName",
+									"value": "HALLOUMI"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "init_new_batch",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \"productName\": \"HALLOUMI\",\r\n   \"batchId\": \"311122024\",\r\n   \"requiredActions\": [\r\n    {\r\n     \"type\": \"milk_delivered\",\r\n     \"from\": \"did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9Kbo6sHBC12QRrparA2rA4St1GNgTLNx3vBy4obWPyjG38y5Jmr1ajefRG9vw5Wj7UVPKyYAUsVXmdAeANVa8eUqbaJmixVjwESjoPVPe7FcetwD1Fs9VVCF8CnyfG3gWr3LG\",\r\n     \"fromName\": \"HLM tracks Ltd\",\r\n     \"notesToActor\": \"deliver 80 kilos of cow milk from Alabra\"\r\n     },\r\n        {\r\n     \"type\": \"mint_delivered\",\r\n     \"from\": \"did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbrcXn4QKx7RFrqpEjVzragf2bufBrekvVAEuA7oqrFtLeK5aD7ecSKP7Uonk2d8H5wrf5AeJWo1JNZ1RA8SdHvU3qngKZoV3fcH4hqqvQHs2yvpwzCRjexQcKicEHSbGCZS\",\r\n      \"fromName\": \"HLM tracks Ltd\",\r\n     \"notesToActor\": \"deliver 60 kilos of mint from Papouis Ltd\"\r\n     },\r\n      {\r\n     \"type\": \"milk_loaded_to_track\",\r\n     \"from\": \"did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbotEyRwnwnK8MxyTQxcXJpycNBCbAsNfyDZj3CwcBPiUMufU19Rbtr3773tpBDERazx9KGNZxHMWYCqXaJ6ERRuj5dekBgjeyqzJXXH37N84KdsCELVv2v3hMQCzGtfDdqn\",\r\n      \"fromName\": \"Alabra farm Ltd\",\r\n     \"notesToActor\": \"deliver 80 kilos of cow milk\"\r\n     },\r\n     {\r\n     \"type\": \"mint_loaded_to_track\",\r\n     \"from\": \"did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9KbpjEbjCx1pUVT9MunfT9b9HQRX87WJAH3iPY4PSZ5LnaFnwwcF5b1pe4aesBtS1tNCXbzefXh6Lwomzhc9qVK7mnQRsYpeDGmJUy6BPL1im31eYPHbicckXjLPXz56Upm3r\",\r\n      \"fromName\": \"Papouis Mint Ltd\",\r\n     \"notesToActor\": \"deliver 60 kilos of mint\"\r\n     }\r\n    ],\r\n   \"vp_token\": \"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHliZEE4VXJnTm03QmhVc1pCcFpSdkc0TVhMNnY0NmI5aFVtaTRXQ1FqeVdBRUVMcWZuaDZFS1EzZmdlSjZFYWI3VzZWOHVoaVNjUXlHUUs5UnUzdjc0R3VQVW1RcTFwczZFN2NweEFzTEN3czdrNVJlQ3Jvc3BoNnAyMzR2TURMcCN6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2JweWJkQThVcmdObTdCaFVzWkJwWlJ2RzRNWEw2djQ2YjloVW1pNFdDUWp5V0FFRUxxZm5oNkVLUTNmZ2VKNkVhYjdXNlY4dWhpU2NReUdRSzlSdTN2NzRHdVBVbVFxMXBzNkU3Y3B4QXNMQ3dzN2s1UmVDcm9zcGg2cDIzNHZNRExwIn0.eyJqdGkiOiJ1cm46ZGlkOjI3YWI0OWIwLWQxOWItNGI3MC04ZDhjLWI4MDZlMzlkZWY3YyIsInN1YiI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHliZEE4VXJnTm03QmhVc1pCcFpSdkc0TVhMNnY0NmI5aFVtaTRXQ1FqeVdBRUVMcWZuaDZFS1EzZmdlSjZFYWI3VzZWOHVoaVNjUXlHUUs5UnUzdjc0R3VQVW1RcTFwczZFN2NweEFzTEN3czdrNVJlQ3Jvc3BoNnAyMzR2TURMcCIsImlzcyI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHliZEE4VXJnTm03QmhVc1pCcFpSdkc0TVhMNnY0NmI5aFVtaTRXQ1FqeVdBRUVMcWZuaDZFS1EzZmdlSjZFYWI3VzZWOHVoaVNjUXlHUUs5UnUzdjc0R3VQVW1RcTFwczZFN2NweEFzTEN3czdrNVJlQ3Jvc3BoNnAyMzR2TURMcCIsIm5iZiI6MTcyOTk1MzI3NCwiZXhwIjoxNzMwODE3MzM0LCJpYXQiOjE3Mjk5NTMzMzQsImF1ZCI6Imh0dHA6Ly8xOTIuMTY4LjEuNjo2MDAxL3YzL3RudCIsIm5vbmNlIjoiOTczYjkxYzYtY2NjMi00OGJlLTk0Y2EtMGFlOTIyN2YyNjcxIiwidnAiOnsiaWQiOiJ1cm46ZGlkOjI3YWI0OWIwLWQxOWItNGI3MC04ZDhjLWI4MDZlMzlkZWY3YyIsIkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZVByZXNlbnRhdGlvbiJdLCJob2xkZXIiOiJkaWQ6a2V5OnoyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnB5YmRBOFVyZ05tN0JoVXNaQnBaUnZHNE1YTDZ2NDZiOWhVbWk0V0NRanlXQUVFTHFmbmg2RUtRM2ZnZUo2RWFiN1c2Vjh1aGlTY1F5R1FLOVJ1M3Y3NEd1UFVtUXExcHM2RTdjcHhBc0xDd3M3azVSZUNyb3NwaDZwMjM0dk1ETHAiLCJ2ZXJpZmlhYmxlQ3JlZGVudGlhbCI6WyJleUpoYkdjaU9pSkZVekkxTmlJc0luUjVjQ0k2SWtwWFZDSXNJbXRwWkNJNkltUnBaRHBsWW5OcE9ucHZURGR0UWtoSVVXOHlaMWRFVm5veFdFcFFaMUF6STFkcFNTMUdhVWxPVVROa2RXNW5hSGhHTTNRdFluUlFkMHBXVFZSQ1JFWTVNVkZoYUhCUFQzZG9aSE1pZlEuZXlKcWRHa2lPaUoyWXpwamVXVmljMms2TURnMU1Ua3lZV0l0T0RkbFlpMDBOVGN6TFRrMk1HRXRPREV4TURVMU5UaGhOMlkwSWl3aWMzVmlJam9pWkdsa09tdGxlVHA2TW1SdGVrUTRNV05uVUhnNFZtdHBOMHBpZFhWTmJVWlpjbGRRWjFsdmVYUjVhMVZhTTJWNWNXaDBNV281UzJKd2VXSmtRVGhWY21kT2JUZENhRlZ6V2tKd1dsSjJSelJOV0V3MmRqUTJZamxvVlcxcE5GZERVV3A1VjBGRlJVeHhabTVvTmtWTFVUTm1aMlZLTmtWaFlqZFhObFk0ZFdocFUyTlJlVWRSU3psU2RUTjJOelJIZFZCVmJWRnhNWEJ6TmtVM1kzQjRRWE5NUTNkek4yczFVbVZEY205emNHZzJjREl6TkhaTlJFeHdJaXdpYVhOeklqb2laR2xrT21WaWMyazZlbTlNTjIxQ1NFaFJiekpuVjBSV2VqRllTbEJuVURNaUxDSnVZbVlpT2pFM01qazVNVEU0TnpNc0ltVjRjQ0k2TVRjMk1UUTBOemczTXl3aWFXRjBJam94TnpJNU9URXhPRGN6TENKMll5STZleUpBWTI5dWRHVjRkQ0k2V3lKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXhPQzlqY21Wa1pXNTBhV0ZzY3k5Mk1TSmRMQ0pwWkNJNkluWmpPbU41WldKemFUb3dPRFV4T1RKaFlpMDROMlZpTFRRMU56TXRPVFl3WVMwNE1URXdOVFUxT0dFM1pqUWlMQ0owZVhCbElqcGJJbFpsY21sbWFXRmliR1ZEY21Wa1pXNTBhV0ZzSWl3aVZtVnlhV1pwWVdKc1pVRjBkR1Z6ZEdGMGFXOXVJaXdpVEdsalpXNXpaVlJ2VDNCbGNtRjBaU0pkTENKcGMzTjFaWElpT25zaWFXUWlPaUprYVdRNlpXSnphVHA2YjB3M2JVSklTRkZ2TW1kWFJGWjZNVmhLVUdkUU15SXNJbXhsWjJGc1RtRnRaU0k2SWsxcGJtbHpkSEo1SUU5bUlFRnlaMmxqZFd4MGRYSmxJbjBzSW1semMzVmhibU5sUkdGMFpTSTZJakl3TWpRdE1UQXRNalpVTURNNk1EUTZNek5hSWl3aWFYTnpkV1ZrSWpvaU1qQXlOQzB4TUMweU5sUXdNem93TkRvek0xb2lMQ0oyWVd4cFpFWnliMjBpT2lJeU1ESTBMVEV3TFRJMlZEQXpPakEwT2pNeldpSXNJbVY0Y0dseVlYUnBiMjVFWVhSbElqb2lNakF5TlMweE1DMHlObFF3TXpvd05Eb3pNMW9pTENKamNtVmtaVzUwYVdGc1UzVmlhbVZqZENJNmV5SnBaQ0k2SW1ScFpEcHJaWGs2ZWpKa2JYcEVPREZqWjFCNE9GWnJhVGRLWW5WMVRXMUdXWEpYVUdkWmIzbDBlV3RWV2pObGVYRm9kREZxT1V0aWNIbGlaRUU0VlhKblRtMDNRbWhWYzFwQ2NGcFNka2MwVFZoTU5uWTBObUk1YUZWdGFUUlhRMUZxZVZkQlJVVk1jV1p1YURaRlMxRXpabWRsU2paRllXSTNWelpXT0hWb2FWTmpVWGxIVVVzNVVuVXpkamMwUjNWUVZXMVJjVEZ3Y3paRk4yTndlRUZ6VEVOM2N6ZHJOVkpsUTNKdmMzQm9ObkF5TXpSMlRVUk1jQ0lzSW14bFoyRnNUbUZ0WlNJNklraGhiR3h2ZFcxaGN5Qk1kR1FpTENKd2NtOWtkV04wVG1GdFpTSTZJa2hCVEV4UFZVMUpJaXdpWVd4c2IzZGxaRVYyWlc1MElqb2lhR0ZzYkc5MWJXbGZjSEp2WkhWalpXUWlMQ0pzWVhOMFNXNURhR0ZwYmlJNkluUnlkV1VpZlN3aVkzSmxaR1Z1ZEdsaGJGTmphR1Z0WVNJNmV5SnBaQ0k2SW1oMGRIQnpPaTh2WVhCcExYQnBiRzkwTG1WaWMya3VaWFV2ZEhKMWMzUmxaQzF6WTJobGJXRnpMWEpsWjJsemRISjVMM1l6TDNOamFHVnRZWE12TUhneU1qWTVNV1k1WkRFeE1tWTBNakV6WWpjeE4yRTJaRGsxTkdNd1ptVTBZVGRrTW1SaVltSXhPRE01WVRNeFl6STVZalE0WVRNMVptUmhNelppTVRObUlpd2lkSGx3WlNJNklrWjFiR3hLYzI5dVUyTm9aVzFoVm1Gc2FXUmhkRzl5TWpBeU1TSjlMQ0owWlhKdGMwOW1WWE5sSWpwN0ltbGtJam9pYUhSMGNITTZMeTloY0drdGNHbHNiM1F1WldKemFTNWxkUzkwY25WemRHVmtMV2x6YzNWbGNuTXRjbVZuYVhOMGNua3ZkalV2YVhOemRXVnljeTlrYVdRNlpXSnphVHA2YjB3M2JVSklTRkZ2TW1kWFJGWjZNVmhLVUdkUU15OWhkSFJ5YVdKMWRHVnpMekJqT1dObE9HUXdOV0V3WlRaaVptUXdOREZoTURRMVlXWmlObU5rTkdGbFpUVmxNalJoWkRZek1USXpZVGM1TmpVME1HUTRZalkyTVdRM1pEaGlNallpTENKMGVYQmxJam9pU1hOemRXRnVZMlZEWlhKMGFXWnBZMkYwWlNKOWZYMC5HM1pqaUZCUVhPZG5HdjZnX2NRVFI1aWdCbTA5UEt1R2RDaUp2MFZMMS0tUWJTdzFvNWFCZnhWYVN3VjJRWDM5aDJic2U5TTVxc2RhbnRsT3lUNGhsQSJdfX0.po8KjNNHGJErtDZU6NNurOWgrv6gPnRFsTO2jqmnMw8DGRBKztSH7h9NeLoUIwDawWU5T0_Zl-pmOqkIRLjv5w\",\r\n   \"presentation_submission\" :\r\n   {\"id\":\"00f4c7ee-2934-4db2-adb0-4909652f10d8\",\"definition_id\":\"pdopresentation\",\"descriptor_map\":[{\"id\":\"LicenseToOperate\",\"path\":\"$\",\"format\":\"jwt_vp\",\"path_nested\":{\"id\":\"LicenseToOperate\",\"format\":\"jwt_vc\",\"path\":\"$.verifiableCredential[0]\"}}]}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/init_new_batch",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"init_new_batch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_batch",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \"documentId\": \"0x50444f2d48414c4c4f554d492d3331313032323032342d313233343536373839\",\r\n   \"eventDetails\": {\"production_date\":\"data4\",\"expiry_date\":\"data5\",\"milk_proportions\":\"data6\"},\r\n   \r\n   \"vp_token\": \"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHliZEE4VXJnTm03QmhVc1pCcFpSdkc0TVhMNnY0NmI5aFVtaTRXQ1FqeVdBRUVMcWZuaDZFS1EzZmdlSjZFYWI3VzZWOHVoaVNjUXlHUUs5UnUzdjc0R3VQVW1RcTFwczZFN2NweEFzTEN3czdrNVJlQ3Jvc3BoNnAyMzR2TURMcCN6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2JweWJkQThVcmdObTdCaFVzWkJwWlJ2RzRNWEw2djQ2YjloVW1pNFdDUWp5V0FFRUxxZm5oNkVLUTNmZ2VKNkVhYjdXNlY4dWhpU2NReUdRSzlSdTN2NzRHdVBVbVFxMXBzNkU3Y3B4QXNMQ3dzN2s1UmVDcm9zcGg2cDIzNHZNRExwIn0.eyJqdGkiOiJ1cm46ZGlkOjI3YWI0OWIwLWQxOWItNGI3MC04ZDhjLWI4MDZlMzlkZWY3YyIsInN1YiI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHliZEE4VXJnTm03QmhVc1pCcFpSdkc0TVhMNnY0NmI5aFVtaTRXQ1FqeVdBRUVMcWZuaDZFS1EzZmdlSjZFYWI3VzZWOHVoaVNjUXlHUUs5UnUzdjc0R3VQVW1RcTFwczZFN2NweEFzTEN3czdrNVJlQ3Jvc3BoNnAyMzR2TURMcCIsImlzcyI6ImRpZDprZXk6ejJkbXpEODFjZ1B4OFZraTdKYnV1TW1GWXJXUGdZb3l0eWtVWjNleXFodDFqOUticHliZEE4VXJnTm03QmhVc1pCcFpSdkc0TVhMNnY0NmI5aFVtaTRXQ1FqeVdBRUVMcWZuaDZFS1EzZmdlSjZFYWI3VzZWOHVoaVNjUXlHUUs5UnUzdjc0R3VQVW1RcTFwczZFN2NweEFzTEN3czdrNVJlQ3Jvc3BoNnAyMzR2TURMcCIsIm5iZiI6MTcyOTk1MzI3NCwiZXhwIjoxNzMwODE3MzM0LCJpYXQiOjE3Mjk5NTMzMzQsImF1ZCI6Imh0dHA6Ly8xOTIuMTY4LjEuNjo2MDAxL3YzL3RudCIsIm5vbmNlIjoiOTczYjkxYzYtY2NjMi00OGJlLTk0Y2EtMGFlOTIyN2YyNjcxIiwidnAiOnsiaWQiOiJ1cm46ZGlkOjI3YWI0OWIwLWQxOWItNGI3MC04ZDhjLWI4MDZlMzlkZWY3YyIsIkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZVByZXNlbnRhdGlvbiJdLCJob2xkZXIiOiJkaWQ6a2V5OnoyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnB5YmRBOFVyZ05tN0JoVXNaQnBaUnZHNE1YTDZ2NDZiOWhVbWk0V0NRanlXQUVFTHFmbmg2RUtRM2ZnZUo2RWFiN1c2Vjh1aGlTY1F5R1FLOVJ1M3Y3NEd1UFVtUXExcHM2RTdjcHhBc0xDd3M3azVSZUNyb3NwaDZwMjM0dk1ETHAiLCJ2ZXJpZmlhYmxlQ3JlZGVudGlhbCI6WyJleUpoYkdjaU9pSkZVekkxTmlJc0luUjVjQ0k2SWtwWFZDSXNJbXRwWkNJNkltUnBaRHBsWW5OcE9ucHZURGR0UWtoSVVXOHlaMWRFVm5veFdFcFFaMUF6STFkcFNTMUdhVWxPVVROa2RXNW5hSGhHTTNRdFluUlFkMHBXVFZSQ1JFWTVNVkZoYUhCUFQzZG9aSE1pZlEuZXlKcWRHa2lPaUoyWXpwamVXVmljMms2TURnMU1Ua3lZV0l0T0RkbFlpMDBOVGN6TFRrMk1HRXRPREV4TURVMU5UaGhOMlkwSWl3aWMzVmlJam9pWkdsa09tdGxlVHA2TW1SdGVrUTRNV05uVUhnNFZtdHBOMHBpZFhWTmJVWlpjbGRRWjFsdmVYUjVhMVZhTTJWNWNXaDBNV281UzJKd2VXSmtRVGhWY21kT2JUZENhRlZ6V2tKd1dsSjJSelJOV0V3MmRqUTJZamxvVlcxcE5GZERVV3A1VjBGRlJVeHhabTVvTmtWTFVUTm1aMlZLTmtWaFlqZFhObFk0ZFdocFUyTlJlVWRSU3psU2RUTjJOelJIZFZCVmJWRnhNWEJ6TmtVM1kzQjRRWE5NUTNkek4yczFVbVZEY205emNHZzJjREl6TkhaTlJFeHdJaXdpYVhOeklqb2laR2xrT21WaWMyazZlbTlNTjIxQ1NFaFJiekpuVjBSV2VqRllTbEJuVURNaUxDSnVZbVlpT2pFM01qazVNVEU0TnpNc0ltVjRjQ0k2TVRjMk1UUTBOemczTXl3aWFXRjBJam94TnpJNU9URXhPRGN6TENKMll5STZleUpBWTI5dWRHVjRkQ0k2V3lKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXhPQzlqY21Wa1pXNTBhV0ZzY3k5Mk1TSmRMQ0pwWkNJNkluWmpPbU41WldKemFUb3dPRFV4T1RKaFlpMDROMlZpTFRRMU56TXRPVFl3WVMwNE1URXdOVFUxT0dFM1pqUWlMQ0owZVhCbElqcGJJbFpsY21sbWFXRmliR1ZEY21Wa1pXNTBhV0ZzSWl3aVZtVnlhV1pwWVdKc1pVRjBkR1Z6ZEdGMGFXOXVJaXdpVEdsalpXNXpaVlJ2VDNCbGNtRjBaU0pkTENKcGMzTjFaWElpT25zaWFXUWlPaUprYVdRNlpXSnphVHA2YjB3M2JVSklTRkZ2TW1kWFJGWjZNVmhLVUdkUU15SXNJbXhsWjJGc1RtRnRaU0k2SWsxcGJtbHpkSEo1SUU5bUlFRnlaMmxqZFd4MGRYSmxJbjBzSW1semMzVmhibU5sUkdGMFpTSTZJakl3TWpRdE1UQXRNalpVTURNNk1EUTZNek5hSWl3aWFYTnpkV1ZrSWpvaU1qQXlOQzB4TUMweU5sUXdNem93TkRvek0xb2lMQ0oyWVd4cFpFWnliMjBpT2lJeU1ESTBMVEV3TFRJMlZEQXpPakEwT2pNeldpSXNJbVY0Y0dseVlYUnBiMjVFWVhSbElqb2lNakF5TlMweE1DMHlObFF3TXpvd05Eb3pNMW9pTENKamNtVmtaVzUwYVdGc1UzVmlhbVZqZENJNmV5SnBaQ0k2SW1ScFpEcHJaWGs2ZWpKa2JYcEVPREZqWjFCNE9GWnJhVGRLWW5WMVRXMUdXWEpYVUdkWmIzbDBlV3RWV2pObGVYRm9kREZxT1V0aWNIbGlaRUU0VlhKblRtMDNRbWhWYzFwQ2NGcFNka2MwVFZoTU5uWTBObUk1YUZWdGFUUlhRMUZxZVZkQlJVVk1jV1p1YURaRlMxRXpabWRsU2paRllXSTNWelpXT0hWb2FWTmpVWGxIVVVzNVVuVXpkamMwUjNWUVZXMVJjVEZ3Y3paRk4yTndlRUZ6VEVOM2N6ZHJOVkpsUTNKdmMzQm9ObkF5TXpSMlRVUk1jQ0lzSW14bFoyRnNUbUZ0WlNJNklraGhiR3h2ZFcxaGN5Qk1kR1FpTENKd2NtOWtkV04wVG1GdFpTSTZJa2hCVEV4UFZVMUpJaXdpWVd4c2IzZGxaRVYyWlc1MElqb2lhR0ZzYkc5MWJXbGZjSEp2WkhWalpXUWlMQ0pzWVhOMFNXNURhR0ZwYmlJNkluUnlkV1VpZlN3aVkzSmxaR1Z1ZEdsaGJGTmphR1Z0WVNJNmV5SnBaQ0k2SW1oMGRIQnpPaTh2WVhCcExYQnBiRzkwTG1WaWMya3VaWFV2ZEhKMWMzUmxaQzF6WTJobGJXRnpMWEpsWjJsemRISjVMM1l6TDNOamFHVnRZWE12TUhneU1qWTVNV1k1WkRFeE1tWTBNakV6WWpjeE4yRTJaRGsxTkdNd1ptVTBZVGRrTW1SaVltSXhPRE01WVRNeFl6STVZalE0WVRNMVptUmhNelppTVRObUlpd2lkSGx3WlNJNklrWjFiR3hLYzI5dVUyTm9aVzFoVm1Gc2FXUmhkRzl5TWpBeU1TSjlMQ0owWlhKdGMwOW1WWE5sSWpwN0ltbGtJam9pYUhSMGNITTZMeTloY0drdGNHbHNiM1F1WldKemFTNWxkUzkwY25WemRHVmtMV2x6YzNWbGNuTXRjbVZuYVhOMGNua3ZkalV2YVhOemRXVnljeTlrYVdRNlpXSnphVHA2YjB3M2JVSklTRkZ2TW1kWFJGWjZNVmhLVUdkUU15OWhkSFJ5YVdKMWRHVnpMekJqT1dObE9HUXdOV0V3WlRaaVptUXdOREZoTURRMVlXWmlObU5rTkdGbFpUVmxNalJoWkRZek1USXpZVGM1TmpVME1HUTRZalkyTVdRM1pEaGlNallpTENKMGVYQmxJam9pU1hOemRXRnVZMlZEWlhKMGFXWnBZMkYwWlNKOWZYMC5HM1pqaUZCUVhPZG5HdjZnX2NRVFI1aWdCbTA5UEt1R2RDaUp2MFZMMS0tUWJTdzFvNWFCZnhWYVN3VjJRWDM5aDJic2U5TTVxc2RhbnRsT3lUNGhsQSJdfX0.po8KjNNHGJErtDZU6NNurOWgrv6gPnRFsTO2jqmnMw8DGRBKztSH7h9NeLoUIwDawWU5T0_Zl-pmOqkIRLjv5w\",\r\n   \"presentation_submission\" :\r\n   {\"id\":\"00f4c7ee-2934-4db2-adb0-4909652f10d8\",\"definition_id\":\"pdopresentation\",\"descriptor_map\":[{\"id\":\"LicenseToOperate\",\"path\":\"$\",\"format\":\"jwt_vp\",\"path_nested\":{\"id\":\"LicenseToOperate\",\"format\":\"jwt_vc\",\"path\":\"$.verifiableCredential[0]\"}}]}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/update_batch",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"update_batch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"pm.environment.set(\"access_token\", jsonData.access_token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+									"type": "text"
+								},
+								{
+									"key": "pre-authorized_code",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImR0QWZzUFZ1d0ZyMFlmSEZmcTBJaGE0U2V4NGRBT1BKb2Yzb1R1ekJPN2MifQ.eyJjbGllbnRfaWQiOiJkaWQ6a2V5OnpCaEJMbVlteWlodG9tUmRKSk5FS3piUGo1MW80YTNHWUZlWm9SSFNBQktVd3FkamlRUFkyZzNtR1NOajhoa2cxODk3ZUJpbnBxSFFOdzlyVmg2OUN2Qzk1U2tVbmtORDJUcVA2UlhyOHZOamlFU1VtQXdYWTgxQlJCNExTWkoyRGcxVWQ3UEY4WDVuOFpUYnJlb0ZkWmtHdmhpNkFiYm9ZZ0Z6dWU5UUNSOFFTUDI3VW1WNVl4QyIsImF1dGhvcml6YXRpb25fZGV0YWlscyI6W3sidHlwZSI6Im9wZW5pZF9jcmVkZW50aWFsIiwiZm9ybWF0Ijoiand0X3ZjIiwibG9jYXRpb25zIjpbImh0dHA6Ly8xOTIuMTY4LjEuNjo2MDAxL3YzL3RudCJdLCJ0eXBlcyI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlZlcmlmaWFibGVBdHRlc3RhdGlvbiIsIkxpY2Vuc2VUb09wZXJhdGUiXX1dLCJpYXQiOjE3Mjk2NjI1NDgsImV4cCI6MTcyOTc0ODk0OCwiaXNzIjoiaHR0cDovLzE5Mi4xNjguMS42OjYwMDEvdjMvdG50IiwiYXVkIjoiaHR0cDovLzE5Mi4xNjguMS42OjYwMDEvdjMvYXV0aCIsInN1YiI6ImRpZDprZXk6ekJoQkxtWW15aWh0b21SZEpKTkVLemJQajUxbzRhM0dZRmVab1JIU0FCS1V3cWRqaVFQWTJnM21HU05qOGhrZzE4OTdlQmlucHFIUU53OXJWaDY5Q3ZDOTVTa1Vua05EMlRxUDZSWHI4dk5qaUVTVW1Bd1hZODFCUkI0TFNaSjJEZzFVZDdQRjhYNW44WlRicmVvRmRaa0d2aGk2QWJib1lnRnp1ZTlRQ1I4UVNQMjdVbVY1WXhDIn0.urqoQnuSO4s0l2-UKQPtNRA_b5Do-EReaPsekBVUnY_BJ-B5FhSU4ckvVDnMJcLt2n4NtwS97cDzYlb-M_9upw",
+									"description": "{\"client_id\": \"did:key:zBhBLmYmyihtomRdJJNEKzbPj51o4a3GYFeZoRHSABKUwqdjiQPY2g3mGSNj8hkg1897eBinpqHQNw9rVh69CvC95SkUnkND2TqP6RXr8vNjiESUmAwXY81BRB4LSZJ2Dg1Ud7PF8X5n8ZTbreoFdZkGvhi6AbboYgFzue9QCR8QSP27UmV5YxC\",\n  \"authorization_details\": [\n    {\n      \"type\": \"openid_credential\",\n      \"format\": \"jwt_vc\",\n      \"locations\": [\n        \"http://192.168.1.6:6001/v3/tnt\"\n      ],\n      \"types\": [\n        \"VerifiableCredential\",\n        \"VerifiableAttestation\",\n        \"CitizenId\"\n      ]\n    }\n  ],\n  \"iat\": 1729489469,\n  \"exp\": 1729490669,\n  \"iss\": \"http://192.168.1.6:6001/v3/tnt\",\n  \"aud\": \"http://192.168.1.6:6001/v3/auth\",\n  \"sub\": \"did:key:zBhBLmYmyihtomRdJJNEKzbPj51o4a3GYFeZoRHSABKUwqdjiQPY2g3mGSNj8hkg1897eBinpqHQNw9rVh69CvC95SkUnkND2TqP6RXr8vNjiESUmAwXY81BRB4LSZJ2Dg1Ud7PF8X5n8ZTbreoFdZkGvhi6AbboYgFzue9QCR8QSP27UmV5YxC\"\n}",
+									"type": "text"
+								},
+								{
+									"key": "user_pin",
+									"value": "346805",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/auth/token",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "credential",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"types\": [\r\n        \"VerifiableCredential\",\r\n        \"VerifiableAttestation\",\r\n        \"LicenseToOperate\"\r\n    ],\r\n    \"format\": \"jwt_vc\",\r\n    \"proof\": {\r\n        \"proof_type\": \"jwt\",\r\n        \"jwt\": \"eyJ0eXAiOiJvcGVuaWQ0dmNpLXByb29mK2p3dCIsImFsZyI6IkVTMjU2Iiwia2lkIjoiZGlkOmtleTp6MmRtekQ4MWNnUHg4VmtpN0pidXVNbUZZcldQZ1lveXR5a1VaM2V5cWh0MWo5S2J0MU5ZMTZTdlJBYjFVV1NFcWRRSFc0SGhKeUhqVUdMU1NWMzhXV1VZbWRxQlRWUFoyNmVGdnp4RlJld0s5S0NFa01BMVQ3azhFcUJMUHJCWEtScFVSbVJTNzRqZW9TVHdjRXlRcjR2N0hhQkU3blBVU2U1Qng5UkM5alZjUDZhWWQyI3oyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnQxTlkxNlN2UkFiMVVXU0VxZFFIVzRIaEp5SGpVR0xTU1YzOFdXVVltZHFCVFZQWjI2ZUZ2enhGUmV3SzlLQ0VrTUExVDdrOEVxQkxQckJYS1JwVVJtUlM3NGplb1NUd2NFeVFyNHY3SGFCRTduUFVTZTVCeDlSQzlqVmNQNmFZZDIifQ.eyJpc3MiOiJkaWQ6a2V5OnoyZG16RDgxY2dQeDhWa2k3SmJ1dU1tRllyV1BnWW95dHlrVVozZXlxaHQxajlLYnQxTlkxNlN2UkFiMVVXU0VxZFFIVzRIaEp5SGpVR0xTU1YzOFdXVVltZHFCVFZQWjI2ZUZ2enhGUmV3SzlLQ0VrTUExVDdrOEVxQkxQckJYS1JwVVJtUlM3NGplb1NUd2NFeVFyNHY3SGFCRTduUFVTZTVCeDlSQzlqVmNQNmFZZDIiLCJub25jZSI6IjQzZTlmOTVkLTU1NGEtNGI1Zi05NDY0LTlkMWU5ZWFiODQ3NSIsImlhdCI6MTY4NTM0MzA0Mzc5ODg2NiwiYXVkIjoiaHR0cDovLzE5Mi4xNjguMC4yMDozMDA1L3YzL2lzc3VlciJ9.DeAZVTUeNfRTY-DNmrpAWSdIsjqVbWKugqT6a3vp28eKL1wa6ELTZjNvS0r_Bs9z2FTTzJcTq1a1QCM8pw-MFg\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/credential",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								"credential"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "meta-tnt",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/tnt/.well-known/openid-credential-issuer",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"tnt",
+								".well-known",
+								"openid-credential-issuer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "meta-auth",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/auth/.well-known/openid-configuration",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"auth",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "authorize",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backendUrl}}/v3/auth/authorize?response_type=code&scope=openid&client_id=did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9Kbt1NY16SvRAb1UWSEqdQHW4HhJyHjUGLSSV38WWUYmdqBTVPZ26eFvzxFRewK9KCEkMA1T7k8EqBLPrBXKRpURmRS74jeoSTwcEyQr4v7HaBE7nPUSe5Bx9RC9jVcP6aYd2&redirect_uri=openid://www.cv.com&code_challenge=YjI0ZTQ4NTBhMzJmMmZhNjZkZDFkYzVhNzlhNGMyZDdjZDlkMTM4YTY4NjcyMTA5M2Q2OWQ3YjNjOGJlZDBlMSAgLQo&code_challenge_method=S256&authorization_details=[{\"type\": \"openid_credential\", \"format\":\"jwt_vc\", \"locations\":[\"http://www.abc.com\"], \"types\": [ \"VerifiableCredential\",       \"VerifiableAttestation\",       \"CTWalletSameInTime\"]  } ]&issuer_state=eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6InRCWUJfZmhYWGVhcVJ6Vm56WjBMd3FmT3BWaUFoeWdER01RVnZKVzlpSm8ifQ.eyJjbGllbnRfaWQiOiJubyBjbGllbnRfaWQiLCJjcmVkZW50aWFsX3R5cGVzIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiVmVyaWZpYWJsZUF0dGVzdGF0aW9uIiwiQ1RXYWxsZXRTYW1lSW5UaW1lIl0sInN0cmVhbWlkIjoiY2IyNzcxNmYtMjQ0My00NGE2LTk3OWMtMDdmODlhNzY3ZTExIiwiaWF0IjoxNjkwOTU1MDc4LCJleHAiOjE2OTA5NTUzNzgsImlzcyI6Imh0dHA6Ly8xNzIuMjcuOTYuMTozMDA1L3YzL2lzc3VlciIsImF1ZCI6Imh0dHA6Ly8xNzIuMjcuOTYuMTozMDA1L3YzL2F1dGgiLCJzdWIiOiJubyBzdWJqZWN0In0._fBo4AhOBOhyLPg_Yb8Vk1-6uU4zT5H60HlhTNs5Smms8VDLSmPp5HifudChmdFytLNUVyGA7C-HTfpAOnJvVw",
+							"host": [
+								"{{backendUrl}}"
+							],
+							"path": [
+								"v3",
+								"auth",
+								"authorize"
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								},
+								{
+									"key": "client_id",
+									"value": "did:key:z2dmzD81cgPx8Vki7JbuuMmFYrWPgYoytykUZ3eyqht1j9Kbt1NY16SvRAb1UWSEqdQHW4HhJyHjUGLSSV38WWUYmdqBTVPZ26eFvzxFRewK9KCEkMA1T7k8EqBLPrBXKRpURmRS74jeoSTwcEyQr4v7HaBE7nPUSe5Bx9RC9jVcP6aYd2"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "openid://www.cv.com"
+								},
+								{
+									"key": "code_challenge",
+									"value": "YjI0ZTQ4NTBhMzJmMmZhNjZkZDFkYzVhNzlhNGMyZDdjZDlkMTM4YTY4NjcyMTA5M2Q2OWQ3YjNjOGJlZDBlMSAgLQo"
+								},
+								{
+									"key": "code_challenge_method",
+									"value": "S256"
+								},
+								{
+									"key": "authorization_details",
+									"value": "[{\"type\": \"openid_credential\", \"format\":\"jwt_vc\", \"locations\":[\"http://www.abc.com\"], \"types\": [ \"VerifiableCredential\",       \"VerifiableAttestation\",       \"CTWalletSameInTime\"]  } ]"
+								},
+								{
+									"key": "issuer_state",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6InRCWUJfZmhYWGVhcVJ6Vm56WjBMd3FmT3BWaUFoeWdER01RVnZKVzlpSm8ifQ.eyJjbGllbnRfaWQiOiJubyBjbGllbnRfaWQiLCJjcmVkZW50aWFsX3R5cGVzIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiVmVyaWZpYWJsZUF0dGVzdGF0aW9uIiwiQ1RXYWxsZXRTYW1lSW5UaW1lIl0sInN0cmVhbWlkIjoiY2IyNzcxNmYtMjQ0My00NGE2LTk3OWMtMDdmODlhNzY3ZTExIiwiaWF0IjoxNjkwOTU1MDc4LCJleHAiOjE2OTA5NTUzNzgsImlzcyI6Imh0dHA6Ly8xNzIuMjcuOTYuMTozMDA1L3YzL2lzc3VlciIsImF1ZCI6Imh0dHA6Ly8xNzIuMjcuOTYuMTozMDA1L3YzL2F1dGgiLCJzdWIiOiJubyBzdWJqZWN0In0._fBo4AhOBOhyLPg_Yb8Vk1-6uU4zT5H60HlhTNs5Smms8VDLSmPp5HifudChmdFytLNUVyGA7C-HTfpAOnJvVw"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "publicly available APIs"
+		}
+	]
+}
