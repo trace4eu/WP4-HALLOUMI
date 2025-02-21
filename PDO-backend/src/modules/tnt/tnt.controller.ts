@@ -60,6 +60,12 @@ export class TnTController {
     return this.tntService.getCredentialIssuerMetadata();
   }
 
+  @Get("/getProfile")
+  @HttpCode(201)
+  getProfile(): object {
+    return this.tntService.getProfile();
+  }
+
   @Get("/active_actors")
   @HttpCode(201)
   async actors(

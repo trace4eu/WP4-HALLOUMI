@@ -22,7 +22,7 @@ export class paginateDto {
   
     @IsNotEmpty()
     @IsOptional()
-    searchtext?: string;
+    productName?: string;
   
     @IsNotEmpty()
     @IsOptional()

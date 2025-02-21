@@ -37,6 +37,7 @@ import { IssuedVC, IssuedVCDocument } from "../../shared/models/issuedvcs.model.
 import { Product, ProductDocument } from "../../shared/models/products.model.js";
 import NewProductDto from "./dto/newproduct.dto.js";
 import EventDetailsDto from "./dto/eventdetails.dto.js";
+import { getVCdata, type SupportedVCType } from "../tnt/issuer.vcdata.js";
 
 
 
@@ -59,6 +60,15 @@ export class AdminService {
    @InjectModel(Product.name) private ProductModel: Model<ProductDocument>,
     
   ) {}
+
+
+  async walletCab(): Promise<Object> {
+
+    const walletCababilities = await this.tntService.adminWalletCab();
+    return walletCababilities;
+   
+ 
+   }
 
   async issue_vc(
     issuevcDto : issueVCDto
@@ -132,6 +142,121 @@ export class AdminService {
 
   }
 
+
+  async getissuedvcs(page: number =1, limit: number =5, productName:string ='HALLOUMI', order?:string ): Promise<object> {
+
+    let result: {metadata: object,data: object[]} = {metadata:{},data:[]}
+
+    // const deferredvcs = await this.IssuedVCModel.find({
+    //   issued:false,
+    //   deferred:true
+    // });
+
+    const ordertype = (order && order.includes('oldest')) ? 1 : -1;
+    //console.log('order->'+order +' '+ordertype);
+  
+    const pagevcs = await this.IssuedVCModel.aggregate([
+      {
+        $match: {
+         // issued:true,
+          // deferred:true,
+          // acceptancetoken: {$exists: true},
+          actorDID: {$exists: true},
+          productName: productName
+          // ...(searchtext && {userid: searchtext}),
+        },
+        
+      },
+      {
+        $sort: {issuedDate: ordertype}
+      },
+      {
+        $facet: {
+          metaData: [
+            {
+              $count: "total",
+            },
+            {
+              $addFields: {
+                pageNumber: page,
+                totalPages: {$ceil: {$divide: ["$total",limit]}},
+              } 
+            }
+          ],
+          data: [
+            {
+              $skip: (page-1)*limit,
+            },
+            {
+              $limit: limit,
+            }
+
+          ]
+        }
+      }
+      
+    ])
+
+    result.metadata = pagevcs[0].metaData[0];
+
+    if (pagevcs && pagevcs[0] && pagevcs[0].data.length > 0)
+
+     {
+      pagevcs[0].data.map((element: IssuedVC)=> {
+       
+          result.data.push({
+                      issued_id: element._id,
+                    //  reqDate: element.reqDate,
+                     // deferred: element.deferred,
+                     
+                      legalName: element.legalName,
+                      allowedEvent: element.allowedEvent,
+                      issuedDate: element.issuedDate,
+                      downloaded:element.downloaded,
+                      // acceptanceToken: element.acceptancetoken,
+                      // walletdid: element.walletdid,
+                  
+                      
+                    });
+        
+      });
+    }
+    return result;
+    
+  }
+
+  
+  async issuedvc(issued_id:string): Promise<object> {
+
+    try {
+
+    
+    const result = await this.IssuedVCModel.findById(issued_id).exec() as IssuedVC;
+  
+    if (result && result.vcjwt) {
+      const {status} = await this.tntService.verifyVC(result.vcjwt);
+      const vctype = this.tntService.SupportedVC as SupportedVCType;
+      const vcdata = getVCdata(result.vcjwt,vctype,result.actorDID);
+
+
+      return {
+       
+        status,
+        downloaded: result.downloaded,
+        vcdata : vcdata,
+       
+      }
+
+    }
+    else return {error: 'not found'}
+    
+    
+    } catch (e) {
+      console.log('findbyid exec->'+e);
+      return {error: `${e}`}
+    }
+
+  }
 
 
   async newProduct(

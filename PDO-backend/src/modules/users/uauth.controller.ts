@@ -58,7 +58,7 @@ export class UserAuthController {
         'name': user.nickname,
         'token': sign({ _id: user._id, nickname: user.nickname, email:user.email },
           `${process.env['JWT_SECRET_PASSWORD']}`,
-          { 'expiresIn': '15m', 'algorithm': 'HS256' })
+          { 'expiresIn': '35m', 'algorithm': 'HS256' })
       }
     
   }

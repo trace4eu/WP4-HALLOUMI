@@ -90,7 +90,8 @@ export interface PendingBatch {
   batchId: string;
   createdOnBehalfOfName: string;
   requiredEvents: RequiredEvent[];
-  pendingRequiredEvents: string[]
+  pendingRequiredEvents: RequiredEvent[]
+  completedEvents: PDOEvent[]
   
 }
 

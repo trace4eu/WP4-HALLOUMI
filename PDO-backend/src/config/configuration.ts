@@ -20,6 +20,7 @@ export interface ApiConfig {
   apiUrlPrefix: string;
   domain: string;
   backEndUrl: string;
+  orgName: string;
   frontEndUrl:string;
   localOrigin: string;
   //ebsiEnvConfig: EbsiEnvConfiguration;
@@ -108,6 +109,7 @@ export const loadConfig = (): ApiConfig => {
     //   services,
     // },
     backEndUrl: process.env.BACK_END_URL || DOMAIN,
+    orgName: process.env.ORG_NAME || "",
     frontEndUrl: process.env.FRONT_END_URL || DOMAIN,
     localOrigin: process.env.LOCAL_ORIGIN || "",
     logLevel: process.env.LOG_LEVEL || "info",
@@ -174,6 +176,7 @@ export const ApiConfigModule = ConfigModule.forRoot({
     DOMAIN: Joi.string().uri().required(),
     LOCAL_ORIGIN: Joi.string().uri(),
     HEALTH_CHECK: Joi.string(),
+    ORG_NAME: Joi.string(),
     REQUEST_TIMEOUT: Joi.string(),
     // Variables specific to Conformance API
     BACK_END_URL: Joi.string().uri(),

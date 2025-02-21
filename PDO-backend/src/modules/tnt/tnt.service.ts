@@ -26,7 +26,7 @@ import {
   
 } from "jose";
 import type { JWK, JWTPayload, ProtectedHeaderParameters } from "jose";
-import { Resolver } from "did-resolver";
+import { DIDDocument, Resolver, VerificationMethod } from "did-resolver";
 import { getResolver as getEbsiDidResolver } from "@cef-ebsi/ebsi-did-resolver";
 import { getResolver as getKeyDidResolver,util, } from "@cef-ebsi/key-did-resolver";
 import {
@@ -37,6 +37,7 @@ import {
 import type {
   EbsiEnvConfiguration,
   EbsiIssuer,
+  EbsiVerifiableAccreditation,
   EbsiVerifiableAttestation,
   EbsiVerifiableAttestation20221101,
   EbsiVerifiableAttestation202401,
@@ -141,6 +142,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
   private readonly serverUrl: string;
 
   private readonly backEndUrl: string;
+  private readonly orgName: string;
    frontEndURL: string;
 
   LoginRequired: boolean;
@@ -175,7 +177,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
    * Issuer  kid (must refer to a verification method in the DID Document)
    */
   private readonly issuerKid: string;
-
+ // private readonly issuerKides256k: string;
   /**
    * Issuer  accreditation (URL of the attribute in TIR v4)
    */
@@ -258,7 +260,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
    * Issuer 's authorization_endpoint when acting as a client
    */
   private clientAuthorizationEndpoint: string;
-  
+  private readonly domain: string;
   private readonly pex: PEXv2;
 
   private authKeyPair?: KeyPair;
@@ -277,7 +279,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
   ) {
 
     this.pex = new PEXv2();
-    
+    this.domain = configService.get<string>("domain");
     //this.ebsiEnvConfig = configService.get("ebsiEnvConfig", { infer: true });
     this.IdentificationRequired = configService.get<boolean>("identificationRequired");
     this.LoginRequired = configService.get<boolean>("loginRequired");
@@ -290,6 +292,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
     this.frontEndURL = configService.get<string>("frontEndUrl");
     this.vcins_mode = configService.get<string>("vcins_mode");
     this.backEndUrl = configService.get<string>("backEndUrl");
+    this.orgName = configService.get<string>("orgName");
     const apiUrlPrefix = configService.get<string>("apiUrlPrefix");
     this.authUri = `${this.backEndUrl}${apiUrlPrefix}/auth`;
     this.issuerUri = `${this.backEndUrl}${apiUrlPrefix}/tnt`;
@@ -300,6 +303,7 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
       "issuerPrivateKey"
     );
     this.issuerKid = configService.get<string>("issuerKid");
+   // this.issuerKides256k = configService.get<string>("issuerKides256k");
     [this.issuerDid] = this.issuerKid.split("#") as [string];
     this.issuerAccreditationUrl = configService.get<string>(
       "issuerAccreditationUrl"
@@ -383,6 +387,119 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
       keys: [publicKeyJwk],
     };
   }
+
+
+  
+  async adminWalletCab(): Promise<Object> {
+    //throw new Error("Method not implemented.");
+    //update config with new did and privatekeyHex and reload
+    //or manually update config and restart server
+    let verification: { id: string; alg:string|undefined }[] | undefined;
+    let verificationMethod;
+    let authentication:(string | VerificationMethod)[] | undefined;
+    let assertionMethod: (string | VerificationMethod)[] | undefined;
+    let capabilityInvocation: (string | VerificationMethod)[] | undefined;
+    let DIDdocument;
+    let diddocument: AxiosResponse<DIDDocument>;
+    try {
+      const did = this.issuerDid;
+      diddocument = await axios.get(
+        `${this.didRegistryApiUrl}/${did}`
+      );
+      ({ verificationMethod,authentication,assertionMethod,capabilityInvocation}  = diddocument.data);
+     
+    } catch (error) {
+      //console.error(error); 
+      // return {
+      //   success: false,
+      //   errors: [`Error connecting to EBSI DIR: ${getErrorMessage(error)}`],
+      // };
+    
+    }
+
+   
+   verification = verificationMethod && verificationMethod.map((item)=>( {
+    id: item.id,
+    alg:  item.publicKeyJwk?.crv 
+    }));
+   
+   
+    if (!verification) verification = [];
+    if (!authentication) authentication = [];
+    if (!assertionMethod) assertionMethod = [];
+    if (!capabilityInvocation) capabilityInvocation =[];
+
+    DIDdocument = {verificationMethod:verification,authentication,assertionMethod,capabilityInvocation}
+
+    type TIRAttributes = {
+      attributes: {hash:string, issuerType:string, tao:string, rootTao:string, body:string}[]
+    }
+    let tirResponse: AxiosResponse<TIRAttributes>;
+    let attributes: {hash:string,issuerType:string, tao:string, rootTao:string,body:string}[] = [];
+    try {
+      const did = this.issuerDid;
+      tirResponse = await axios.get(
+        `${this.trustedIssuersRegistryApiUrl}/${did}`
+      );
+      ({attributes}  = tirResponse.data  );
+     
+    } catch (error) {
+      //console.error(error); 
+      // return {
+      //   success: false,
+      //   errors: [`Error connecting to EBSI TIR: ${getErrorMessage(error)}`],
+      // };
+    
+    }
+
+    const getResAttribute =(vcjwt: string|undefined) => {
+
+      if (vcjwt) {
+        
+        try{
+        const VerifiableAccreditationToAccreditPayload = decodeJwt(vcjwt) ;
+        const VerifiableAccreditationToAccreditvc = VerifiableAccreditationToAccreditPayload['vc'] as EbsiVerifiableAccreditation;
+     //   const verifiableAccreditationToAccreditReservedAttributeId = VerifiableAccreditationToAccreditvc.credentialSubject.reservedAttributeId;
+       const accreditedFor= VerifiableAccreditationToAccreditvc.credentialSubject.accreditedFor ?
+                          VerifiableAccreditationToAccreditvc.credentialSubject.accreditedFor[0]?.types : null ;
+        const termsOfUse = VerifiableAccreditationToAccreditvc.termsOfUse as {id:String;type:string};
+       // console.log('reservedAtttrId->'+verifiableAccreditationToAccreditReservedAttributeId);
+        return { 
+          accreditedFor: accreditedFor ? accreditedFor : [],
+          termsOfUse: termsOfUse ? termsOfUse.id : null,
+         // reservedAttributeId: verifiableAccreditationToAccreditReservedAttributeId ? verifiableAccreditationToAccreditReservedAttributeId : null
+        }
+        } catch(e) {
+          console.log("error decoding accrVC"+e);
+          return null;
+        } 
+        
+      } else
+      return null;
+    }
+
+    const fileteredAttr = attributes.map((item)=>( {
+      attributeId: item.hash, 
+      issuerType:item.issuerType,
+      tao: item.tao,
+      rootTao: item.rootTao,
+     // accreditationVCexists: item.body ? 'yes' : 'no',
+      accreditationVC: getResAttribute(item.body)
+    }));
+    
+    return {
+      Domain:  this.domain,
+      DID: this.issuerDid,
+      DIDKid_ES256: this.issuerKid,
+     // DIDKid_ES256K: this.issuerKides256k,
+      DID_Registry_API_Url: this.didRegistryApiUrl,
+      TIR_Registry_API_Url: this.trustedIssuersRegistryApiUrl,
+      Accreditation_Url: this.issuerAccreditationUrl,
+      DID_Registry:DIDdocument,
+      TIR_Registry: fileteredAttr,
+    }
+  }
+
 
 
   async get_license_vc( getLicense: getLicenseDto ){
@@ -509,6 +626,15 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
      }
   }
 
+
+  async getProfile(): Promise<object> {
+ 
+
+    // Return JWKS
+    return {
+      orgName: this.orgName,
+    };
+  }
   
   async products(productName:string|undefined): Promise<object> {
 
@@ -1160,23 +1286,22 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
 
      results.map( batch => {
        const {requiredEvents, pdoEvents} = batch;
-       const pendingRequiredEvents: string[] = []
+       const pendingRequiredEvents: RequiredEvent[] = []
+       const completedEvents: PDOEvent[] = []
        const batchCompleted = pdoEvents.some(event => (event.lastInChain));
 
        if (!batchCompleted) { 
 
           requiredEvents.map(reqEvent => {
           
-              if (!(pdoEvents.some(pdoEvent => 
+              if ((pdoEvents.some(pdoEvent => 
                 pdoEvent.type == reqEvent.type
-              )))
-              pendingRequiredEvents.push(
-                reqEvent.type
-           //   type: reqEvent.type,
-           //   from: reqEvent.from,
-           //   fromName: reqEvent.fromName,
-           //   notesToActor: reqEvent.notesToActor}
-              )
+              ))) {
+                const completedEvent = pdoEvents.filter(event=> event.type==reqEvent.type)[0]
+                if (completedEvent) 
+                  completedEvents.push(completedEvent)
+            } else 
+              pendingRequiredEvents.push(reqEvent)
 
               })
               pendingBatch.push({
@@ -1185,7 +1310,8 @@ export class TntService /*implements OnModuleInit, OnModuleDestroy*/ {
                 batchId: batch.batchId,
                 createdOnBehalfOfName: batch.createdOnBehalfOfName,
                 requiredEvents: batch.requiredEvents,
-                pendingRequiredEvents 
+                pendingRequiredEvents,
+                completedEvents 
               })
         }
       })

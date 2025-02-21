@@ -17,6 +17,13 @@ const { sign } = pkg;
 export class AdminController {
   constructor(private adminService: AdminService, private userService: UserService) {}
 
+
+  @HttpCode(200)
+  @Get("/walletcab")
+  async walletCab(): Promise<Object> {
+    return await this.adminService.walletCab();
+  }
+
   @HttpCode(200)
      @Get("/issue_vc")
      async issue_vc(
@@ -25,7 +32,26 @@ export class AdminController {
        return await this.adminService.issue_vc(issuevcDto);
      }
 
-  
+     @Get("/getissuedVCs")
+     @HttpCode(201)
+     async issuedvcs(@Query() params:paginateDto): Promise<object> {
+       const {page,limit,productName,order} = params;
+       console.log('params->'+JSON.stringify(params));
+      
+       let page1:number,limit1:number;
+       if (!page) page1=1; else page1 = Number(page);
+       if (!limit) limit1=5; else limit1 = Number(limit);
+   
+       return await this.adminService.getissuedvcs(page1,limit1,productName,order);
+     }
+
+     @Get("/issuedVC/:issued_id")
+     @HttpCode(201)
+     async issuedvc(
+       @Param() params: {issued_id:string}
+     ): Promise<object> {
+       return await this.adminService.issuedvc(params.issued_id);
+     }
 
      @HttpCode(200)
      @Post("/newProduct")

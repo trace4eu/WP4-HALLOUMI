@@ -18,6 +18,7 @@ declare global {
       LOG_LEVEL?: "silent" | "error" | "warn" | "info" | "verbose" | "debug";
       DOMAIN: string;
       BACK_END_URL?: string;
+      ORG_NAME?: string;
       FRONT_END_URL?:string;
       LOCAL_ORIGIN?: string;
       REQUEST_TIMEOUT?: string;
