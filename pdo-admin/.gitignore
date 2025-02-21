@@ -1,0 +1,53 @@
+
+# Logs
+logs
+*.log
+
+
+# Users Environment Variables
+.lock-wscript
+
+# OS generated files #
+.DS_Store
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Node Files #
+/node_modules
+node_modules
+/bower_components
+npm-debug.log
+
+
+# Typing #
+/src/typings/tsd/
+/typings/
+/tsd_typings/
+
+# Dist #
+/dist
+/distprod
+/public/__build__/
+/src/*/__build__/
+/__build__/**
+/public/dist/
+/src/*/dist/
+/public/distprod/
+/src/*/distprod/
+/dist/**
+/distprod/**
+.webpack.json
+src/**/*.js
+src/**/*.map
+
+# Doc #
+/doc/
+
+# IDE #
+.idea/
+*.swp
+*.iml
+
+# mocks #
+/__mocked/**

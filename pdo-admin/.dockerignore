@@ -1,0 +1,19 @@
+# Exclude everything
+*
+
+# Only add what is necessary
+!package.json
+!nest-cli.json
+!tsconfig.production.json
+!tsconfig.json
+!webpack.config.js
+!webpack.config.https.js
+!yarn.lock
+!.env.Docker
+!.env
+!module.d.ts
+!index.html
+!src
+
+# The image tag information is used in the service
+!.ci

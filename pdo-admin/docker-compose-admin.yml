@@ -1,0 +1,12 @@
+version: "3.7"
+
+name: admingui
+
+services:
+  admingui:
+    container_name: admingui
+    image: admingui:040424
+    volumes:
+      - ../certs:/certs:ro
+    ports:
+      - 9001:9001

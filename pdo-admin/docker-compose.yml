@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  admingui:
+    build: 
+      context: .
+    volumes:
+      - ../certs:/certs:ro
+    ports:
+      - 9001:9001

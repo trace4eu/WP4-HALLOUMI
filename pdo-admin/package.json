@@ -1,0 +1,46 @@
+{
+  "devDependencies": {
+    "@types/dotenv-webpack": "^7.0.7",
+    "@types/node": "^20.11.16",
+    "@types/react": "^18.2.52",
+    "@types/react-dom": "^18.2.18",
+    "@webpack-cli/generators": "^3.0.7",
+    "css-loader": "^6.8.1",
+    "dotenv-webpack": "^8.0.1",
+    "html-webpack-plugin": "^5.5.4",
+    "mini-css-extract-plugin": "^2.8.0",
+    "prettier": "^3.2.4",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "version": "1.0.0",
+  "description": "My webpack project",
+  "name": "my-webpack-project",
+  "scripts": {
+    "build": "webpack --config webpack.config.https.js --mode=production --node-env=production",
+    "build:dev": "webpack --mode=development",
+    "watch": "webpack --watch",
+    "servehttp": "webpack serve",
+    "serve": "serve ./distprod -l 9001 --ssl-key ../certs/cert.key --ssl-cert ../certs/cert.crt -s",
+    "dev": "webpack-dev-server --mode development",
+    "devhttps": "webpack-dev-server --config webpack.config.https.js --mode development",
+    "devhttpseurobank": "webpack-dev-server --config webpack.config.https.eurobank.js --mode development",
+    "devhttpshellenic": "webpack-dev-server --config webpack.config.https.hellenic.js --mode development"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@fontsource/roboto": "^5.0.8",
+    "@mui/icons-material": "^5.15.7",
+    "@mui/material": "^5.15.7",
+    "axios": "^1.6.7",
+    "react-jwt": "^1.2.0",
+    "react-router-dom": "^6.22.0",
+    "react-select": "^5.9.0",
+    "save-dev": "^0.0.1-security"
+  }
+}
